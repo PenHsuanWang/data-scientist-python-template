@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Project Sequence Diagram</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .diagram-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 1000px;
+            overflow-x: auto;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2>機器學習標準化專案 - 循序圖 (Sequence Diagram)</h2>
+        <pre class="mermaid">
+        sequenceDiagram
+            autonumber
+            actor User as CLI / 排程器
+
+            box rgba(40, 167, 69, 0.1) Control Vector
+                participant Main as main.py
+                participant Pipeline as Pipeline
+            end
+
+            box rgba(255, 193, 7, 0.1) Cross-Cutting
+                participant Config as Config Model
+            end
+
+            box rgba(0, 123, 255, 0.1) Domain Vector
+                participant Loader as Loader (I/O)
+                participant Preprocessor as Preprocessor
+                participant Trainer as Trainer
+            end
+
+            %% 系統啟動與初始化
+            User->>Main: 觸發執行 (傳遞 CLI 參數)
+            activate Main
+            Main->>Config: 實例化並驗證參數
+            activate Config
+            Config-->>Main: 回傳 Config 物件
+            deactivate Config
+
+            Main->>Pipeline: 實例化 Pipeline(config)
+
+            %% 控制流開始
+            Main->>Pipeline: 呼叫 run() 啟動工作流
+            activate Pipeline
+
+            %% 1. 資料獲取
+            Pipeline->>Loader: fetch_data()
+            activate Loader
+            Note right of Loader: 連接 DB 或讀取 CSV
+            Loader-->>Pipeline: 回傳 DataFrame (df)
+            deactivate Loader
+
+            %% 2. 特徵工程
+            Pipeline->>Preprocessor: fit_transform(df)
+            activate Preprocessor
+            Note right of Preprocessor: 記憶狀態 (Scaling/Imputing)
+            Preprocessor-->>Pipeline: 回傳特徵矩陣與標籤 (X, y)
+            deactivate Preprocessor
+
+            %% 3. 模型訓練 (展示 Exception 發生情境)
+            Pipeline->>Trainer: fit(X, y)
+            activate Trainer
+
+            alt Happy Path (訓練成功)
+                Note right of Trainer: 執行 ML 演算法
+                Trainer-->>Pipeline: 訓練完成，回傳 metrics
+
+                %% 4. 模型儲存
+                Pipeline->>Trainer: save(model_path)
+                Trainer-->>Pipeline: 模型已序列化儲存 (.pkl)
+                Pipeline-->>Main: 工作流順利結束
+                Main-->>User: 系統正常退出 (Exit Code 0)
+            else Exception Path (例如：演算法不收斂或 OOM)
+                Trainer--xPipeline: 拋出 ModelTrainingError
+                deactivate Trainer
+
+                %% 例外往上傳遞
+                Note over Pipeline: 捕捉錯誤，標記階段為「訓練失敗」，繼續上拋
+                Pipeline--xMain: 重新拋出 ModelTrainingError (繼承自 MLProjectBaseError)
+                deactivate Pipeline
+
+                Note over Main: Top-level Catch-all 攔截錯誤
+                Main->>Main: 記錄 Critical 日誌，並清理資源
+                Main-->>User: 系統異常退出 (Exit Code 1)
+            end
+            deactivate Main
+        </pre>
+    </div>
+</body>
+</html>

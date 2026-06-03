@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML Project Orthogonal Architecture</title>
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .diagram-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 1200px;
+            overflow-x: auto;
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="diagram-container">
+        <h2>機器學習標準化專案模板 - 正交化架構 (Orthogonal Architecture)</h2>
+        <pre class="mermaid">
+        graph TD
+            %% ==========================================
+            %% 外部觸發與進入點 (System Trigger)
+            %% ==========================================
+            Start(("▶ 系統啟動 <br/> (CLI / 排程器)"))
+
+            %% ==========================================
+            %% [維度 1] 橫切關注點 (Orthogonal / Cross-Cutting Concerns)
+            %% 獨立於業務邏輯之外的基礎設施，被所有層級共用
+            %% ==========================================
+            subgraph Orthogonal [Orthogonal: Cross-Cutting Concerns]
+                direction LR
+                Config["src/ml_core/config.py <br/> (Single Source of Truth)"]
+                Exceptions["src/exceptions/ <br/> (Error Contracts)"]
+                Utils["src/utils/ <br/> (Pure Math/Stats)"]
+            end
+
+            %% ==========================================
+            %% [維度 2] 控制流 (Control Vector)
+            %% 負責初始化與流程調度，不包含具體資料轉換
+            %% ==========================================
+            subgraph Control [Control Vector: Orchestration]
+                direction TB
+                Main["main.py <br/> (Entry Point & DI Container)"]
+                Pipeline["src/ml_core/pipeline.py <br/> (Workflow Engine)"]
+            end
+
+            %% 系統啟動指向 Main
+            Start ==> Main
+
+            %% ==========================================
+            %% [維度 3] 領域邏輯與狀態 (Domain Vector)
+            %% 負責具體的資料操作、轉換與演算法狀態
+            %% ==========================================
+            subgraph Domain [Domain Vector: Execution & State]
+                direction TB
+                Loader["src/data_fetch/loader.py <br/> (I/O)"]
+                Preprocessor["src/ml_core/preprocessor.py <br/> (Stateful Transforms)"]
+                Trainer["src/ml_core/trainer.py <br/> (Algorithms)"]
+            end
+
+            %% 控制流內部關聯
+            Main == "實例化並注入" ==> Pipeline
+
+            %% 控制權交接 (Control Flow -> Domain Flow)
+            Pipeline -- "1. 呼叫 fetch" --> Loader
+            Pipeline -- "2. 呼叫 fit_transform" --> Preprocessor
+            Pipeline -- "3. 呼叫 fit" --> Trainer
+
+            %% 領域資料流 (Data Payload Flowing between Domain objects)
+            Loader -. "傳遞 DataFrame" .-> Preprocessor
+            Preprocessor -. "傳遞 X, y (Tensor)" .-> Trainer
+
+            %% 橫切關聯：設定檔的依賴注入 (Config Dependency)
+            Config -. "注入設定" .-> Main
+            Config -. "讀取路徑" .-> Loader
+            Config -. "讀取特徵參數" .-> Preprocessor
+            Config -. "讀取超參數" .-> Trainer
+
+            %% 橫切關聯：例外防護網 (Exception Dependency)
+            Loader -. "拋出 DataFetchError" .-> Exceptions
+            Preprocessor -. "拋出 PreprocessingError" .-> Exceptions
+            Trainer -. "拋出 ModelTrainingError" .-> Exceptions
+
+            Exceptions -. "攔截與處置" .-> Pipeline
+            Exceptions -. "終極攔截與 System Exit" .-> Main
+
+            %% 樣式設定
+            classDef startNode fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:white,font-weight:bold;
+            classDef cross fill:#fff3cd,stroke:#ffc107,stroke-width:2px,stroke-dasharray: 5 5;
+            classDef control fill:#d4edda,stroke:#28a745,stroke-width:2px;
+            classDef domain fill:#cce5ff,stroke:#007bff,stroke-width:2px;
+
+            class Start startNode;
+            class Orthogonal,Config,Exceptions,Utils cross;
+            class Control,Main,Pipeline control;
+            class Domain,Loader,Preprocessor,Trainer domain;
+        </pre>
+    </div>
+</body>
+</html>

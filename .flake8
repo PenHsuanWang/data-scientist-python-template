@@ -1,0 +1,20 @@
+[flake8]
+# 對齊 Black 與 Ruff 的設定 (PEP 8 建議為 79，但在現代寬螢幕與 Black 規範中 88 為首選)
+max-line-length = 88
+
+# 忽略因自動格式化工具 (如 Black) 可能產生的衝突
+# E203: whitespace before ':'
+# W503: line break before binary operator
+extend-ignore = E203, W503
+
+# 要排除的目錄
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    venv,
+    .tox,
+    build,
+    dist,
+    notebooks,
+    data
