@@ -1,6 +1,6 @@
 import pandas as pd
 from src.ml_core.config import ProjectConfig
-from src.exceptions import PreprocessingError
+from src.exceptions import PreprocessingError, MLProjectBaseError
 
 
 class Preprocessor:
@@ -36,6 +36,8 @@ class Preprocessor:
             # 回傳假的骨架資料
             return pd.DataFrame(), pd.Series(dtype=float)
 
+        except MLProjectBaseError:
+            raise
         except Exception as e:
             raise PreprocessingError("特徵工程階段轉換失敗") from e
 

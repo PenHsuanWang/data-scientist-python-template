@@ -4,19 +4,19 @@
 
 ---
 
-## 1. 核心設計理念：正交化架構 (Orthogonal Architecture)
+## 1. 核心設計理念：正交化與六角架構 (Orthogonal & Hexagonal Architecture)
 
-為解決 Jupyter Notebook 中常見的狀態污染與義大利麵條程式碼 (Spaghetti Code)，本專案揚棄了單純的分層設計，採用了更高階的「正交化架構」。整個系統被拆解為三個獨立變化、互不干涉的維度：
+為解決 Jupyter Notebook 中常見的狀態污染與義大利麵條程式碼 (Spaghetti Code)，本專案融合了「正交化設計」與「六角架構 (Ports & Adapters)」。整個系統被拆解為三個獨立變化、互不干涉的維度：
 
 1.  **控制維度 (Control Vector)**: `main.py` 與 `src/ml_core/pipeline.py`
-    *   **職責**：決定執行的順序 (Orchestration)。
+    *   **職責**：決定執行的順序 (Orchestration) 與依賴注入 (Dependency Injection)。
     *   **限制**：不包含任何數學運算、特徵轉換或硬編碼 (Hardcode) 的參數。
-2.  **領域維度 (Domain Vector)**: `loader.py`, `preprocessor.py`, `trainer.py`
-    *   **職責**：執行具體的任務，如資料存取、特徵工程 (保留狀態) 與演算法訓練。
-    *   **限制**：模組之間不互相呼叫，必須由 Control Vector 負責傳遞資料 (`DataFrame`, `Tensor`)。
+2.  **領域與適配維度 (Domain & Adapters)**: `src/ml_core/` 與 `src/adapters/`
+    *   **職責**：執行具體的任務。`loader.py` 作為 Adapter 負責與外部環境 (I/O) 互動；`preprocessor.py` 與 `trainer.py` 負責核心領域的特徵工程與模型訓練。
+    *   **限制**：模組之間不互相呼叫，必須由 Control Vector 負責傳遞資料。Adapter 實作領域層定義的 Protocol。
 3.  **橫切維度 (Cross-Cutting Concerns)**: `Config`, `Exceptions`, `Utils`
     *   **職責**：貫穿全系統的基礎設施。
-    *   **限制**：不可依賴 Control 或 Domain 維度。`Config` 是全系統單一真相來源，`Exceptions` 提供錯誤語意，`Utils` 僅存放無狀態的純函式 (Pure Functions)。
+    *   **限制**：不可依賴 Control 或 Domain 維度。`Config` 遵循 12-Factor App (Factor III) 從環境變數與 `.env` 讀取參數。
 
 ---
 
@@ -26,7 +26,7 @@
 *   **不該做**：在 `trainer.py` 或 `preprocessor.py` 裡面直接宣告變數 (`MAX_DEPTH = 5`)。
 *   **必須做**：
     1. 前往 `src/ml_core/config.py` 的 `ProjectConfig`。
-    2. 使用 `pydantic.Field` 新增參數，並設定型別與驗證邊界 (例如 `gt=0`)。
+    2. 使用 `pydantic.Field` 新增參數，由於採用了 `pydantic-settings`，新參數將自動支援從環境變數 (`ML_MAX_DEPTH`) 或 `.env` 檔案載入。
     3. 所有的模組都可以透過 `self.config.new_param` 來安全地存取。
 
 ### 2.2 撰寫特徵轉換邏輯 (Feature Engineering)
@@ -40,7 +40,7 @@
 *   **不該做**：直接 `raise Exception("檔案找不到")` 或 `raise ValueError(...)`，讓錯誤直接炸到最上層。
 *   **必須做**：
     1. 前往 `src/exceptions/__init__.py`，確認是否需要新增繼承自 `MLProjectBaseError` 的自定義例外類別。
-    2. 在 Domain 模組（如 `loader.py`）中，使用 `try...except` 捕捉原生錯誤 (例如 `FileNotFoundError`)。
+    2. 在 Adapter 模組（如 `loader.py`）中，使用 `try...except` 捕捉原生錯誤 (例如 `FileNotFoundError`)。
     3. **攔截並封裝 (Wrap and Raise)**：`raise DataFetchError("資料來源不存在") from e`。
     4. 讓錯誤安全地上拋，交由 `main.py` 的 Top-level Catch-all 進行統一記錄與系統退出 (Exit Code)。
 
@@ -57,7 +57,7 @@
 
 為了維持專案的高品質，所有提交的程式碼必須遵守以下全域約定：
 
-1.  **Strict PEP 8++**: 採用 `Black` 風格排版 (Line length 88)，並使用 `Ruff` 進行靜態分析。
+1.  **極簡工具鏈 (Ruff Only)**: 全面採用 `Ruff` 作為唯一的 Linter, Formatter 與 Import Sorter，不再使用 Flake8、Black 或 isort。
 2.  **Modern Typing (Python 3.10+)**:
     *   嚴格要求每個函式的參數與回傳值都必須有 Type Hints。
     *   禁止使用 `typing.List` 或 `typing.Dict`。必須使用內建型別 `list[str]`, `dict[str, int]`。
@@ -69,11 +69,10 @@
 
 ## 4. 自動化測試與程式碼品質把關 (Toolchain & Automation)
 
-為確保每次提交的程式碼都達到生產環境 (Production-Ready) 的標準，本專案已整合了一套完整的自動化品質把關工具鏈。
+為確保每次提交的程式碼都達到生產環境 (Production-Ready) 的標準，本專案已整合了一套基於 `uv` 與 `Ruff` 的極速自動化品質把關工具鏈。
 
 ### 4.1 靜態分析與風格檢查 (Linting & Formatting)
-*   **Ruff**: 作為主要的 Formatter 與 Linter。它極其快速，負責統一排版（Line length 88）並自動修復常見的語法問題。
-*   **Flake8**: 輔助風格檢查，配置於 `.flake8`，確保程式碼風格與 Black/Ruff 標準一致。
+*   **Ruff**: 作為專案唯一且極其快速的分析工具。它取代了舊時代的工具，負責統一排版（Line length 88）、進階語法檢查與自動修復。
 *   **Mypy**: 嚴格的靜態型別檢查工具。在 `pyproject.toml` 中已開啟 `strict = true`，確保所有的變數傳遞與方法回傳都不會發生 Type Error，這是取代動態型別語言缺點的關鍵。
 
 ### 4.2 單元測試 (Unit Testing)
@@ -83,7 +82,7 @@
 ### 4.3 測試環境統籌 (Test Orchestration)
 *   **Tox**: 專案的測試指揮官 (`tox.ini`)。當您在終端機執行 `tox` 指令時，它會自動建立獨立的虛擬環境，並依序執行三個關卡：
     1.  `py310`: 執行所有的 Pytest 單元測試。
-    2.  `flake8`: 執行語法與風格掃描。
+    2.  `ruff`: 執行語法、風格與 Import 排序掃描。
     3.  `mypy`: 執行嚴格的靜態型別分析。
     任何一個關卡失敗，Tox 都會拋出錯誤，這也是未來 CI/CD Server (如 GitHub Actions) 判斷是否允許 Merge 的核心指令。
 

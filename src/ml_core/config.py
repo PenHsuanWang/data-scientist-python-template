@@ -1,12 +1,20 @@
-from pydantic import BaseModel, Field
 from pathlib import Path
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class ProjectConfig(BaseModel):
+class ProjectConfig(BaseSettings):
     """
     專案全域設定與超參數的單一真相來源 (Single Source of Truth)。
-    負責驗證輸入參數的型別與邊界。
+    遵循 12-Factor App 原則 (Factor III: Config)，優先讀取環境變數。
     """
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        env_prefix="ML_",
+        extra="ignore",
+    )
 
     data_path: Path = Field(
         ..., description="原始資料來源路徑 (CSV 或 SQLite 檔案位置)"

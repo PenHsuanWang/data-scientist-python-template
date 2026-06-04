@@ -68,12 +68,12 @@
             Start ==> Main
 
             %% ==========================================
-            %% [維度 3] 領域邏輯與狀態 (Domain Vector)
+            %% [維度 3] 領域邏輯與執行 (Domain & Adapters)
             %% 負責具體的資料操作、轉換與演算法狀態
             %% ==========================================
-            subgraph Domain [Domain Vector: Execution & State]
+            subgraph Domain [Domain & Adapters: Execution & Persistence]
                 direction TB
-                Loader["src/data_fetch/loader.py <br/> (I/O)"]
+                Loader["src/adapters/loader.py <br/> (Adapter I/O)"]
                 Preprocessor["src/ml_core/preprocessor.py <br/> (Stateful Transforms)"]
                 Trainer["src/ml_core/trainer.py <br/> (Algorithms)"]
             end

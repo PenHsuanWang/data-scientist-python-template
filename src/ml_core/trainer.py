@@ -1,7 +1,8 @@
 import pandas as pd
 from pathlib import Path
+from typing import Any
 from src.ml_core.config import ProjectConfig
-from src.exceptions import ModelTrainingError
+from src.exceptions import ModelTrainingError, MLProjectBaseError
 
 
 class Trainer:
@@ -17,7 +18,7 @@ class Trainer:
         """
         self.config = config
         # TODO: 實例化底層演算法 (e.g. XGBClassifier)
-        self.model = None
+        self.model: Any | None = None
 
     def fit(self, X: pd.DataFrame, y: pd.Series) -> dict[str, float]:
         """
@@ -35,6 +36,8 @@ class Trainer:
             # 回傳假指標
             return {"accuracy": 0.95, "f1_score": 0.92}
 
+        except MLProjectBaseError:
+            raise
         except Exception as e:
             raise ModelTrainingError("模型訓練過程失敗") from e
 

@@ -1,10 +1,14 @@
 import sys
 import logging
+import argparse
 from pathlib import Path
 from pydantic import ValidationError
 
 from src.ml_core.config import ProjectConfig
 from src.ml_core.pipeline import TrainingPipeline
+from src.adapters.loader import DataLoader
+from src.ml_core.preprocessor import Preprocessor
+from src.ml_core.trainer import Trainer
 from src.exceptions import MLProjectBaseError
 
 # 設定基礎日誌輸出
@@ -13,6 +17,18 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 )
 logger = logging.getLogger("SystemEntry")
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="ML Training Pipeline")
+    parser.add_argument(
+        "--data-path", type=Path, help="覆蓋原始資料來源路徑 (Optional)"
+    )
+    parser.add_argument(
+        "--model-save-path", type=Path, help="覆蓋模型儲存路徑 (Optional)"
+    )
+    parser.add_argument("--learning-rate", type=float, help="覆蓋模型學習率 (Optional)")
+    return parser.parse_args()
 
 
 def main() -> None:
@@ -26,16 +42,18 @@ def main() -> None:
     try:
         logger.info("系統初始化中...")
 
-        # 1. 準備 Config (未來可改為透過 argparse 從命令列接收)
-        # 此處展示 Pydantic 的自動驗證機制
-        config = ProjectConfig(
-            data_path=Path("data/raw/dataset.csv"),
-            model_save_path=Path("artifacts/model.pkl"),
-            learning_rate=0.05,
-        )
+        # 1. 準備 Config (CLI 參數會覆蓋 .env 或環境變數)
+        args = _parse_args()
+        cli_overrides = {k: v for k, v in vars(args).items() if v is not None}
+        config = ProjectConfig(**cli_overrides)
 
-        # 2. 實例化並啟動 Pipeline
-        pipeline = TrainingPipeline(config)
+        # 2. 實例化並啟動 Pipeline (依賴注入)
+        pipeline = TrainingPipeline(
+            config=config,
+            loader=DataLoader(),
+            preprocessor=Preprocessor(config),
+            trainer=Trainer(config),
+        )
         pipeline.run()
 
     # 捕捉設定檔驗證失敗 (來自 Pydantic)

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>專案系統架構圖 - System Blueprint</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 40px;
+            background-color: #fcfcfc;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+        }
+        .footer-note {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f0f4f8;
+            border-radius: 8px;
+            border-left: 6px solid #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>專案概念架構圖 (Conceptual Architecture)</h1>
+        <p>基於 Clean Architecture 與 Left-Center-Right 配置設計</p>
+    </div>
+
+    <div class="container">
+        <div class="mermaid">
+        %%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px', 'fontFamily': 'Comic Sans MS, cursive' }}}%%
+        flowchart LR
+            subgraph LEFT ["User / Inputs & Outputs"]
+                direction TB
+                USER(("Data Scientist"))
+                CLI["main.py (CLI)"]
+                NOTE["notebooks/ (EDA)"]
+                OUT[["artifacts/ (Models)"]]
+
+                USER --> CLI
+                USER --> NOTE
+                CLI --> OUT
+            end
+
+            subgraph CENTER ["System Boundary (ML Template)"]
+                direction TB
+
+                subgraph STRUC ["Top: Structure"]
+                    SRC["src/"]
+                    TST["tests/"]
+                end
+
+                subgraph CORE ["Middle: Solution Core"]
+                    direction LR
+                    PRE["Preprocessor"]
+                    TRAIN["Trainer"]
+                    PIPE["Pipeline"]
+
+                    PRE --> TRAIN --> PIPE
+                end
+
+                subgraph INFRA ["Bottom: Infra & Quality"]
+                    direction TB
+                    subgraph CICD ["CI/CD"]
+                        GHA["GitHub Actions"]
+                        TOX["Tox"]
+                    end
+                    subgraph QA ["QA Tools"]
+                        RUFF["Ruff / Lint"]
+                        PYT["Pytest"]
+                    end
+                end
+            end
+
+            subgraph RIGHT ["Adapters & Resources"]
+                direction TB
+                ADAP["loader.py (Adapter)"]
+                DB[("data/ (Storage)")]
+
+                ADAP --- DB
+            end
+
+            subgraph TOP_NOTE ["Ancillary Outputs"]
+                DOC["design-doc/ (Docs)"]
+            end
+
+            %% Global Connections
+            LEFT <==> CENTER
+            CENTER <==> RIGHT
+            CENTER -.-> TOP_NOTE
+
+            %% Styles
+            classDef leftZone stroke:#9c27b0,stroke-width:2px,fill:#f3e5f5;
+            classDef centerZone stroke:#2196f3,stroke-width:2px,fill:#e3f2fd;
+            classDef coreZone stroke:#f44336,stroke-width:4px,fill:#ffebee;
+            classDef rightZone stroke:#4caf50,stroke-width:2px,fill:#e8f5e9;
+            classDef dashed stroke-dasharray: 5 5;
+            classDef floatZone stroke:#ff9800,stroke-width:2px,fill:#fff3e0,stroke-dasharray: 5 5;
+
+            class LEFT leftZone;
+            class CENTER centerZone;
+            class CORE coreZone;
+            class RIGHT rightZone;
+            class CICD,QA,INFRA dashed;
+            class TOP_NOTE floatZone;
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <h3>架構摘要 (Summary)</h3>
+        <ul>
+            <li><strong>左側 (Left):</strong> 定義使用者互動介面與最終產出物。</li>
+            <li><strong>中間 (Center):</strong> 核心業務邏輯標示為紅色，受 Top 層結構支撐，並由 Bottom 層工具保障品質。</li>
+            <li><strong>右側 (Right):</strong> 使用 Adapter 模式隔離外部資料來源。</li>
+        </ul>
+        <p><em>"使用此模板快速構建穩健且具備生產等級的機器學習工作流！"</em></p>
+    </div>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, securityLevel: 'loose' });
+    </script>
+</body>
+</html>

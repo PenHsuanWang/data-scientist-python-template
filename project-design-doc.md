@@ -29,7 +29,7 @@ ml_training_template/
 │   └── processed/              # 清理或轉換後的中繼資料
 ├── notebooks/                  # 僅限 EDA、實驗打樣與結果視覺化
 ├── src/                        # 核心業務模組
-│   ├── data_fetch/             # 資料獲取層
+│   ├── adapters/               # 外部介接層 (Adapters)
 │   ├── utils/                  # 共用工具箱
 │   └── ml_core/                # 機器學習核心層
 ├── tests/                      # 單元測試目錄
@@ -48,23 +48,23 @@ ml_training_template/
 * **主要職責：** 專案的執行樞紐（Composition Root）。
 * **細部執行工作：**
 1. 解析命令列參數 (CLI arguments)。
-2. 載入並實例化 `ProjectConfig`。
+2. 載入並實例化 `ProjectConfig`（支援環境變數與 `.env` 檔案載入）。
 3. 實例化 `TrainingPipeline`。
 4. 觸發 `pipeline.run()` 啟動完整的資料流與訓練流程。
 5. 攔截全域層級的例外錯誤 (Global Exception Handling) 並輸出最終日誌。
 
 
 
-### 4.2 資料獲取層 (Data Fetch Layer)
+### 4.2 外部介接層 (Adapters)
 
-**`src/data_fetch/loader.py`**
+**`src/adapters/loader.py`**
 
-* **主要職責：** 負責所有與外部世界的 I/O 互動，完全不涉及特徵工程或業務邏輯。
+* **主要職責：** 負責所有與外部世界的 I/O 互動，實作領域層所需的資料協議。
 * **細部執行工作：**
 1. 建立與外部資料源的連線（如讀取 CSV、連接關聯式資料庫）。
 2. 執行基礎的 SQL 查詢或檔案讀取操作，獲取原始 DataFrame。
-3. 提供靜態方法（Static Methods）進行最基本的資料切割（例如切分 Features 與 Target）。
-4. 處理資料庫斷線或檔案遺失的 I/O 錯誤重試機制。
+3. 處理資料庫斷線或檔案遺失的 I/O 錯誤重試機制。
+4. *設計模式：* 採用 **Adapter Pattern**，確保核心邏輯與底層儲存技術解耦。
 
 
 
@@ -89,8 +89,8 @@ ml_training_template/
 
 * **主要職責：** 定義並驗證所有全域變數與超參數。
 * **細部執行工作：**
-1. 使用 `pydantic.BaseModel` 定義資料契約與參數型別（如 `learning_rate: float`）。
-2. 統一管理檔案路徑（Data paths、Model save paths）。
+1. 使用 `pydantic-settings` 實作 **12-Factor App (Factor III: Config)** 原則。
+2. 優先從環境變數讀取配置，支援從 `.env` 檔案載入預設值。
 3. 在系統啟動時進行參數的邊界檢查（例如樹的深度不能小於 1）。
 
 
@@ -137,7 +137,7 @@ ml_training_template/
 例外不應混雜在一般的工具箱中，而應獨立於 `src/exceptions/` 套件內，賦予錯誤具體的業務語意。例如：
 * `MLProjectBaseError`：所有自定義例外的基底。
 * `ConfigurationError`：設定檔錯誤 (如缺少必要參數、路徑不存在)。
-* `DataFetchError`：資料獲取層錯誤 (如 DB 斷線、檔案找不到)。
+* `DataFetchError`：外部介接層錯誤 (如 DB 斷線、檔案找不到)。
 * `PreprocessingError`：特徵工程階段錯誤 (如發現預期外的 NaN、特徵維度不匹配)。
 * `ModelTrainingError`：訓練階段錯誤 (如演算法不收斂、OOM)。
 
@@ -158,7 +158,7 @@ ml_training_template/
 一旦確定了有效的特徵與演算法，科學家（或搭配機器學習工程師）開始將 Notebook 中的有效邏輯「抽取」出來：
 * SQL 語句放進 `loader.py`。
 * `df.fillna()` 或 `StandardScaler` 的邏輯封裝進 `preprocessor.py` 的 `fit_transform` 內部。
-* 參數從寫死的數字改成 `config.py` 中的變數。
+* 參數從環境變數或 `.env` 讀取，並透過 `config.py` 管理。
 * 最後透過終端機執行 `python main.py` 來驗證整個流程可以一鍵重現。
 
 
@@ -168,5 +168,5 @@ ml_training_template/
 ## 7. 工具鏈配置 (Toolchain)
 
 * **依賴管理：** 採用 `uv` 進行極速的虛擬環境創建與套件鎖定 (`pyproject.toml`)，確保所有開發者環境一致。
-* **靜態分析：** 採用 `ruff` 作為預設的 Linter 與 Formatter，統一團隊的程式碼風格，自動抓取未使用的變數或危險的反模式（Anti-patterns）。
+* **靜態分析：** 採用 **Ruff** 作為唯一的 Linter 與 Formatter，統一團隊的程式碼風格，自動抓取未使用的變數或危險的反模式（Anti-patterns），完全取代 Flake8 與 isort。
 * **測試框架：** 採用 `pytest`，重點針對 `utils/stats.py` 與 `ml_core/preprocessor.py` 撰寫單元測試，確保特徵轉換邏輯的絕對正確性。正確性。

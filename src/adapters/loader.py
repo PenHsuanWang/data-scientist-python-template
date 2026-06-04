@@ -1,16 +1,21 @@
 import pandas as pd
 from pathlib import Path
+from typing import Protocol
 from src.exceptions import DataFetchError
+
+
+class DataLoaderProtocol(Protocol):
+    def fetch(self, data_path: Path) -> pd.DataFrame: ...
 
 
 class DataLoader:
     """
-    負責與外部世界進行 I/O 互動的資料獲取層。
-    本層完全不涉及特徵工程或業務邏輯。
+    外部介接層 (Adapter)。
+    負責與外部世界進行 I/O 互動，本層完全不涉及特徵工程或業務邏輯。
+    實作此 Adapter 以符合領域層要求的資料讀取協議。
     """
 
-    @staticmethod
-    def fetch(data_path: Path) -> pd.DataFrame:
+    def fetch(self, data_path: Path) -> pd.DataFrame:
         """
         讀取外部資料來源並回傳為 Pandas DataFrame。
 
@@ -23,7 +28,6 @@ class DataLoader:
 
         try:
             # TODO: 實作實際的 CSV 讀取或 DB 連線邏輯
-            # return pd.read_csv(data_path)
-            return pd.DataFrame()
+            return pd.read_csv(data_path)
         except Exception as e:
             raise DataFetchError("獲取資料時發生未預期的錯誤") from e

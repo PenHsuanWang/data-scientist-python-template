@@ -172,8 +172,8 @@ def export_to_json(result: AnalysisResult, file_path: str) -> bool:
 ---
 
 ## 7. Implementation Checklist
-- [ ] Code is formatted by `Black`.
-- [ ] Imports are sorted and grouped (recommend `isort` or `Ruff`).
+- [ ] Code is formatted and linted by **Ruff**.
+- [ ] Imports are sorted and grouped by **Ruff**.
 - [ ] All functions have modern type hints for arguments and return values.
 - [ ] Public components have Sphinx-style docstrings.
 - [ ] No `Optional` or `Union` imports from `typing`.

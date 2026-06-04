@@ -1,6 +1,6 @@
 import logging
 from src.ml_core.config import ProjectConfig
-from src.data_fetch.loader import DataLoader
+from src.adapters.loader import DataLoaderProtocol
 from src.ml_core.preprocessor import Preprocessor
 from src.ml_core.trainer import Trainer
 
@@ -13,16 +13,25 @@ class TrainingPipeline:
     負責定義執行順序，本身不參與資料轉換或運算邏輯。
     """
 
-    def __init__(self, config: ProjectConfig):
+    def __init__(
+        self,
+        config: ProjectConfig,
+        loader: DataLoaderProtocol,
+        preprocessor: Preprocessor,
+        trainer: Trainer,
+    ):
         """
         初始化 Pipeline 並進行依賴注入 (Dependency Injection)。
 
         :param config: 專案全域設定物件。
+        :param loader: 資料讀取器實例。
+        :param preprocessor: 資料預處理器實例。
+        :param trainer: 模型訓練器實例。
         """
         self.config = config
-        # 實例化底層的 Domain 狀態物件
-        self.preprocessor = Preprocessor(config)
-        self.trainer = Trainer(config)
+        self.loader = loader
+        self.preprocessor = preprocessor
+        self.trainer = trainer
 
     def run(self) -> None:
         """
@@ -33,7 +42,7 @@ class TrainingPipeline:
         # 步驟 1: 獲取資料
         logger.info("Step 1: 正在從 Loader 獲取資料...")
         # 注意: 我們直接讓底層拋出的自定義例外向上傳遞
-        raw_df = DataLoader.fetch(self.config.data_path)
+        raw_df = self.loader.fetch(self.config.data_path)
 
         # 步驟 2: 特徵工程與預處理
         logger.info("Step 2: 正在執行特徵轉換 (Fit & Transform)...")

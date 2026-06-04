@@ -13,6 +13,50 @@
 
 ---
 
+## 📂 專案結構與概念藍圖 (Project Structure & Blueprint)
+
+根據目前專案目錄，以下是核心目錄結構摘要，以及依據架構規範設計的藍圖：
+
+### 📁 當前核心目錄結構 (Tree)
+```text
+data-scientist-python-template/
+├── data/                 # 資料來源
+├── notebooks/            # 實驗與探索筆記本
+├── src/                  # 專案原始碼
+│   ├── adapters/         # 外部轉接器 (如 loader.py)
+│   ├── exceptions/       # 錯誤處理
+│   ├── ml_core/          # 機器學習核心邏輯 (pipeline, preprocessor, trainer)
+│   └── utils/            # 共用工具
+├── tests/                # 測試案例
+├── design-doc/           # 架構與設計文件
+├── artifacts/            # 產出物
+├── .github/workflows/    # CI/CD 流程
+├── main.py               # 系統進入點
+├── pyproject.toml        # 專案配置 (相依性套件、Ruff 等)
+└── tox.ini               # 測試環境配置
+```
+
+### 📐 概念架構藍圖 (Left-Center-Right Layout)
+
+*   **Left Zone (User & Context):**
+    *   **Input:** Data Scientist / Engineer 透過 `notebooks/` 探索，或執行 CLI `main.py` 啟動流程。
+    *   **Output:** 訓練產出的模型與報表 (`artifacts/`)。
+*   **Center Zone (System Core):**
+    *   **Top Layer (Structure):** `src/`, `tests/`
+    *   **Middle Layer (Solution Core - 🔴 重點標示):** `src/ml_core/` (Pipeline 串接、Preprocessor 前處理、Trainer 模型訓練)。
+    *   **Bottom Layer (Infra & Tooling - 虛線標示):**
+        *   **CI/CD:** GitHub Actions (`ci.yml`), `tox`
+        *   **Dev Tools:** `pytest`, `ruff`, `pre-commit`
+*   **Right Zone (Adapters & External Resources):**
+    *   **Adapters:** `src/adapters/loader.py` (資料讀取介面)
+    *   **Data Sources:** 外部或本地資料集 (`data/`)
+*   **Top Zone (Ancillary Outputs):**
+    *   專案設計與架構說明 (`design-doc/`)
+*   **Bottom Zone (Metadata):**
+    *   核心原則：SOLID, Clean Architecture, 模組化機器學習管線。
+
+---
+
 ## 🏗️ 核心架構：正交化維度 (Orthogonal Architecture)
 
 為了徹底解決狀態污染，我們將系統拆解為三個互不干涉的維度。請將程式碼放入對應的維度中：
@@ -27,7 +71,7 @@
 
 ### 3. 🛠️ 橫切維度 (Cross-Cutting): `Config`, `Exceptions`, `Utils`
 - **職責:** 貫穿全系統的基礎設施。
-- **規則:** `Config` 是唯一的參數來源，`Utils` 只放無狀態的純函式 (Pure Functions)。
+- **規則:** `Config` 使用 `pydantic-settings` 作為唯一參數來源（支援環境變數），`Utils` 只放無狀態的純函式 (Pure Functions)。
 
 ---
 
@@ -39,15 +83,15 @@
 
 | 原本在 Notebook 裡寫的... | ➡️ 現在應該搬去... | 備註與注意事項 |
 | :--- | :--- | :--- |
-| `LEARNING_RATE = 0.05` 或檔案路徑 | **`src/ml_core/config.py`** | 這是全域唯一的參數設定中心，我們使用 `pydantic` 來確保參數型別正確。**不要在其他地方寫死數字！** |
-| `pd.read_csv(...)` 或 `engine.execute(sql)` | **`src/data_fetch/loader.py`** | 負責所有 I/O 互動。請在這裡封裝重試機制或底層錯誤捕捉。 |
+| `LEARNING_RATE = 0.05` 或檔案路徑 | **`src/ml_core/config.py`** | 這是全域唯一的參數設定中心，支援從 `.env` 或環境變數讀取。**不要在其他地方寫死數字！** |
+| `pd.read_csv(...)` 或 `engine.execute(sql)` | **`src/adapters/loader.py`** | 負責所有 I/O 互動（Adapter 層）。請在這裡封裝重試機制或底層錯誤捕捉。 |
 | `df.fillna()` 或 `StandardScaler()` 等資料清洗與特徵工程 | **`src/ml_core/preprocessor.py`** | ⚠️ **最關鍵的一步**：這是一個類別。訓練時請用 `fit_transform` 讓物件「記住」狀態（例如平均值）；推論時只能用 `transform` 套用狀態，**嚴格防止資料洩漏 (Data Leakage)**。 |
 | `model = XGBClassifier().fit(X, y)` | **`src/ml_core/trainer.py`** | 封裝特定的演算法。要換演算法？請在這裡替換，只要對外提供統一的 `fit` 和 `evaluate` 介面即可，其他檔案完全不用改！ |
 | `def calculate_distance():` (共用數學公式) | **`src/utils/`** | 放那些「純運算、不需要記住狀態」的函式。Notebook 和 `preprocessor` 都可以安全呼叫它。 |
 
 ---
 
-## ✍️ 程式碼風格約定 (PEP 8++)
+## ✍️ 程式碼風格約定 (Ruff Only)
 
 我們致力於維護可讀性極高、生產級的程式碼庫。提交前請確保符合以下規範：
 
@@ -56,9 +100,7 @@
     *   **正確:** `list[str]`, `dict[str, int]`, `int | None` (用 `|` 代表或)。
     *   **禁止:** 🚫 `from typing import List, Dict, Union, Optional`。
 2.  **文檔字串 (Docstrings):** 所有公開的方法與類別都必須使用 **Sphinx (reST)** 格式撰寫註解，說明用途、`:param`、`:return` 與 `:raises`。
-3.  **防禦性編程 (Defensive Programming):**
-    *   **Guard Clauses (提早返回):** 避免過深的 `if/else` 巢狀結構，不符合條件盡早 `return` 或 `raise`。
-    *   **EAFP 原則:** 多用 `try/except` 來處理可能失敗的操作 (如開檔案)，而不是事先檢查 (`if os.path.exists()`)。
+3.  **防範過度工具化:** 我們全面採用 **Ruff** 作為唯一的 Linter, Formatter 與 Import Sorter，不再使用 Flake8 或 isort，以確保 CI/CD 的極速執行。
 
 ---
 
@@ -87,25 +129,22 @@ Python 是動態語言，容易發生「傳錯參數型別」導致程式在執�
     *   `ignore_missing_imports = true`: 忽略第三方套件 (如 pandas, sklearn) 缺乏型別提示的錯誤，避免雜訊。
     *   `exclude = [...]`: 排除不需要檢查的目錄，例如虛擬環境 (`venv`, `.tox`) 等。
 
-### 3. Ruff & Flake8 (語法與風格檢查 Linter)
-負責統一團隊的程式碼風格，並抓出潛在的語法問題（Anti-patterns）。
-*   **Ruff:** 極速的檢查與排版工具，會自動幫你排版 (Line length 88)，並自動移除未使用的 `import` 或變數。
-*   **Flake8 設定檔位置:** `.flake8` (位於專案根目錄)
-*   **Flake8 設定檔解析:**
-    *   `max-line-length = 88`: 限制每行程式碼最長 88 字元（對齊 Black 與 Ruff 的現代化標準）。
-    *   `extend-ignore = E203, W503`: 這是為了**與自動排版工具和平共處**。忽略這兩個舊版 PEP 8 規則（冒號前空白、運算符前換行），避免 Flake8 和 Ruff 互相打架。
-    *   `exclude = [...]`: 告訴 Flake8 略過 `notebooks`, `data`, `.venv` 等非原始碼目錄。
+### 3. Ruff (全能程式碼檢查與格式化工具)
+負責統一團隊的程式碼風格，並抓出潛在的語法問題。Ruff 取代了舊時代的 Flake8、isort 與 Black。
+*   **設定檔位置:** `pyproject.toml` (位於 `[tool.ruff]` 區塊)
+*   **優勢:** 使用 Rust 編寫，速度比傳統工具快 10-100 倍，能大幅縮短 CI/CD 等候時間。
+*   **自動修復:** 執行 `ruff check --fix` 可以自動修正大部分的語法不規範。
 
 ### 4. Pre-commit (Git 提交防護網)
 這是你在開發時最常碰到的守門員。
 *   **設定檔位置:** `.pre-commit-config.yaml`
-*   **作用:** 它是一個 Git Hook。每次你執行 `git commit` 時，Pre-commit 會依照此設定檔的定義，自動在背後觸發 Ruff、Flake8 等工具進行檢查與修復。
-*   **目的:** 如果你的程式碼不符合規範（例如排版亂掉、有基本語法錯誤），Commit 會直接**被拒絕**，直到你修正為止。這確保了「只有乾淨的程式碼能進入 Git Repo」。
+*   **作用:** 它是一個 Git Hook。每次你執行 `git commit` 時，Pre-commit 會自動觸發 Ruff 進行檢查與修復。
+*   **目的:** 如果你的程式碼不符合規範，Commit 會直接**被拒絕**，直到你修正為止。
 
 ### 5. Tox (測試環境總指揮)
 Tox 是用來統籌整個測試與檢查流程的工具。
 *   **設定檔位置:** `tox.ini`
-*   **作用:** 當你在終端機輸入 `tox` 時，它會自動讀取此設定檔，建立乾淨的虛擬環境，並依序過關斬將：執行 Pytest 測試 ➡️ 執行 Flake8 檢查風格 ➡️ 執行 Mypy 檢查型別。
-*   **目的:** 這是為了模擬 CI/CD (如 GitHub Actions) 的行為。在推上遠端之前，只要在本地跑過一次 `tox` 且全數通過，就能確保你的程式碼達到生產環境的標準。
+*   **作用:** 當你在終端機輸入 `tox` 時，它會自動讀取此設定檔，建立乾淨的虛擬環境，並依序過關蔣：執行 Pytest 測試 ➡️ 執行 Ruff 檢查風格 ➡️ 執行 Mypy 檢查型別。
+*   **目的:** 這是為了模擬 CI/CD 的行為。在推上遠端之前，只要在本地跑過一次 `tox` 且全數通過，就能確保你的程式碼達到生產環境的標準。
 
 祝開發順利！將實驗轉化為穩健的系統，從這裡開始。

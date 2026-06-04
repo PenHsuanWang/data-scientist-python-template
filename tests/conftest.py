@@ -7,12 +7,17 @@ from pathlib import Path
 @pytest.fixture
 def mock_data_path(tmp_path: Path) -> Path:
     """
-    提供一個暫時的測試資料路徑。
+    提供一個暫時的測試資料路徑，並實際建立測試資料。
     """
     data_file = tmp_path / "mock_dataset.csv"
-    # 若有需要，可以在這裡寫入測試用的 CSV 假資料
-    # data_file.write_text("feature1,feature2,target\n1,2,0\n3,4,1")
+    data_file.write_text("feature1,feature2,target\n1,2,0\n3,4,1\n5,6,1")
     return data_file
+
+
+@pytest.fixture
+def mock_missing_data_path(tmp_path: Path) -> Path:
+    """Intentionally non-existent path for error-path tests."""
+    return tmp_path / "does_not_exist.csv"
 
 
 @pytest.fixture
