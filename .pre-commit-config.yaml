@@ -3,7 +3,9 @@ repos:
     rev: v4.5.0
     hooks:
     -   id: trailing-whitespace
+        exclude: '\.(tex|sty|cls|aux|log|out|pdf)$'
     -   id: end-of-file-fixer
+        exclude: '\.(tex|sty|cls|aux|log|out|pdf)$'
     -   id: check-yaml
     -   id: check-added-large-files
         args: ['--maxkb=5000']

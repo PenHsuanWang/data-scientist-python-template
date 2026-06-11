@@ -53,3 +53,9 @@ Thumbs.db
 # Environment variables
 .env
 .venv
+
+# LaTeX
+*.aux
+*.log
+*.out
+*.pdf

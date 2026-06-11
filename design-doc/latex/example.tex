@@ -1,0 +1,57 @@
+\documentclass{modern-c4}
+
+\title{Software Design Architecture: System Context}
+\author{Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This document demonstrates the modern technical styling and the native TikZ-based C4 model implementation for a banking system context.
+
+\section{System Context Diagram}
+The following diagram illustrates the relationship between the users, the internal banking system, and external mainframe services.
+
+\begin{center}
+\begin{tikzpicture}[node distance=3cm, auto]
+    % --- Nodes ---
+    \node[c4_person] (customer) {
+        Personal Banking Customer \\
+        \normalfont\scriptsize A customer of the bank with personal accounts.
+    };
+
+    \node[c4_system, right=of customer] (banking) {
+        Internet Banking System \\
+        \normalfont\scriptsize Allows customers to view accounts and make payments.
+    };
+
+    \node[c4_external, below=of banking] (mainframe) {
+        Mainframe Banking System \\
+        \normalfont\scriptsize Stores all the core banking information.
+    };
+
+    \node[c4_database, right=of banking] (db) {
+        Accounts Database \\
+        \normalfont\scriptsize Relational storage for customer data.
+    };
+
+    % --- Relationships ---
+    \draw[c4_rel] (customer) -- node {Uses} (banking);
+    \draw[c4_rel] (banking) -- node {Queries} (mainframe);
+    \draw[c4_rel] (banking) -- node {Stores data in} (db);
+
+\end{tikzpicture}
+\end{center}
+
+\section{Technical Components}
+Because we use a modern palette, the document remains clean and highly readable.
+
+\begin{itemize}
+    \item \textbf{Internal Systems:} Styled with a light blue fill (\texttt{SystemBlue}).
+    \item \textbf{External Systems:} Styled with a muted slate gray (\texttt{ExtSystemGray}).
+    \item \textbf{Databases:} Styled with a green cylinder (\texttt{DbGreen}).
+\end{itemize}
+
+\end{document}

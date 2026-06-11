@@ -1,0 +1,104 @@
+\documentclass{modern-c4}
+
+\title{Python OOP Guide for Data Scientists: Building Production-Ready ML Systems}
+\author{Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This guide bridges the gap between experimental Jupyter Notebooks and production-grade Object-Oriented Python. It outlines a structured, orthogonal architecture that isolates state, embraces SOLID principles, and provides a scalable foundation for Machine Learning projects.
+\end{abstract}
+
+\section{1. The Motivation: From Notebooks to Engineering}
+Jupyter Notebooks are unparalleled for Exploratory Data Analysis (EDA) and rapid prototyping. However, migrating notebook scripts directly to production often leads to:
+\begin{itemize}
+    \item \textbf{Hidden State Dependencies:} Out-of-order cell execution causing unreproducible results or global variable contamination.
+    \item \textbf{Spaghetti Code:} Data loading, feature engineering, and training logic tightly coupled in long linear scripts.
+    \item \textbf{Data Leakage:} Transforming testing data using testing statistics rather than isolating training statistics cleanly.
+\end{itemize}
+Our standardized Python OOP template solves these issues by establishing a clear "Left-Center-Right" modular architecture.
+
+\section{2. High-Level Conceptual Architecture}
+The system architecture visually and logically separates concerns. We enforce a strict boundary between user interaction, the ML core logic, and external data sources.
+
+\begin{center}
+\begin{tikzpicture}[node distance=2.5cm, auto]
+    % --- LEFT ZONE: User / Context ---
+    \node[c4_person] (datascientist) {
+        Data Scientist \\
+        \normalfont\scriptsize Executes experiments \& pipelines.
+    };
+
+    \node[c4_external, below=1cm of datascientist] (notebooks) {
+        Jupyter Notebooks \\
+        \normalfont\scriptsize EDA \& Prototyping
+    };
+
+    % --- CENTER ZONE: System Core ---
+    \node[c4_container, right=3.5cm of datascientist, yshift=2.5cm] (pipeline) {
+        Training Pipeline \\
+        \normalfont\scriptsize Orchestrates the ML Workflow
+    };
+
+    \node[c4_container, below=0.6cm of pipeline] (preprocessor) {
+        Preprocessor \\
+        \normalfont\scriptsize Stateful Feature Engineering
+    };
+
+    \node[c4_container, below=0.6cm of preprocessor] (trainer) {
+        Model Trainer \\
+        \normalfont\scriptsize Algorithm Encapsulation
+    };
+
+    % Draw a bounding box for the system core
+    \begin{scope}[on background layer]
+        \node[c4_system, fit=(pipeline) (preprocessor) (trainer), inner sep=15pt, label={[font=\sffamily\bfseries\color{SystemBlue}]above:System Boundary (ML Template)}] (system_boundary) {};
+    \end{scope}
+
+    % --- RIGHT ZONE: Adapters & Resources ---
+    \node[c4_system, fill=DbGreen!10, draw=DbGreen, right=1.5cm of pipeline] (adapters) {
+        Adapters (loader.py) \\
+        \normalfont\scriptsize External I/O Interfaces
+    };
+
+    \node[c4_database, below=1.5cm of adapters] (db) {
+        Data Lake / DB \\
+        \normalfont\scriptsize Raw \& Processed Data
+    };
+
+    % --- Connections ---
+    \draw[c4_rel] (datascientist) -- node[above, sloped, pos=0.55] {Triggers CLI} (system_boundary.west |- pipeline);
+    \draw[c4_rel, dashed] (datascientist) -- node[left] {Explores in} (notebooks);
+
+    \draw[c4_rel] (pipeline) -- node[right] {Uses} (preprocessor);
+    \draw[c4_rel] (pipeline) to[bend right=45] node[left] {Uses} (trainer);
+
+    \draw[c4_rel] (pipeline) -- node[above, pos=0.65] {Requests Data via} (adapters);
+    \draw[c4_rel] (adapters) -- node[right] {Queries} (db);
+
+\end{tikzpicture}
+\end{center}
+
+\section{3. Architectural Principles}
+\subsection{Orthogonal Dimensions}
+To prevent state contamination, the architecture is strictly divided into three distinct dimensions:
+\begin{enumerate}
+    \item \textbf{Control Dimension (\texttt{main.py}, \texttt{pipeline.py}):} Orchestrates the workflow. It defines the sequence of execution without hardcoding any mathematical operations or rules.
+    \item \textbf{Domain Dimension (\texttt{preprocessor.py}, \texttt{trainer.py}):} Encapsulates the business logic and ML state (e.g., standard deviation for scaling, tree weights, one-hot encoders).
+    \item \textbf{Cross-Cutting Dimension (\texttt{config.py}, \texttt{utils/}):} Infrastructure that spans the entire system, such as pure utility functions and the Pydantic-based configuration (12-Factor App approach).
+\end{enumerate}
+
+\subsection{Dependency Inversion}
+We adhere to SOLID principles, primarily Dependency Inversion (DI). The \texttt{TrainingPipeline} does not instantiate a concrete \texttt{DataLoader} directly. Instead, concrete implementations are injected via constructors in the composition root (\texttt{main.py}). This allows components to be independently testable using mocks without triggering real network requests.
+
+\section{4. Core Component Breakdown}
+\begin{itemize}
+    \item \textbf{\texttt{adapters/}:} Houses logic to communicate with external systems. It abstracts away SQL queries or CSV reading into generic protocols. This protects the ML Core from database connection failures.
+    \item \textbf{\texttt{ml\_core/}:} The heart of the system. The \texttt{Preprocessor} utilizes \texttt{fit\_transform()} to learn state and \texttt{transform()} for inference. This ensures that validation data is processed solely using training statistics, strictly preventing data leakage.
+    \item \textbf{\texttt{utils/}:} Pure, stateless mathematical or statistical functions that can be safely imported by both notebooks and production pipelines to guarantee identical computational behavior across environments.
+\end{itemize}
+
+\end{document}

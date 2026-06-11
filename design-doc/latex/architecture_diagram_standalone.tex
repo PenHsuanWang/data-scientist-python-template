@@ -1,0 +1,62 @@
+\documentclass[margin=15pt]{standalone}
+\usepackage{modern-c4-style}
+
+\begin{document}
+
+\begin{tikzpicture}[node distance=2.5cm, auto]
+    % --- LEFT ZONE: User / Context ---
+    \node[c4_person] (datascientist) {
+        Data Scientist \\
+        \normalfont\scriptsize Executes experiments \& pipelines.
+    };
+
+    \node[c4_external, below=1cm of datascientist] (notebooks) {
+        Jupyter Notebooks \\
+        \normalfont\scriptsize EDA \& Prototyping
+    };
+
+    % --- CENTER ZONE: System Core ---
+    \node[c4_container, right=3.5cm of datascientist, yshift=2.5cm] (pipeline) {
+        Training Pipeline \\
+        \normalfont\scriptsize Orchestrates the ML Workflow
+    };
+
+    \node[c4_container, below=0.6cm of pipeline] (preprocessor) {
+        Preprocessor \\
+        \normalfont\scriptsize Stateful Feature Engineering
+    };
+
+    \node[c4_container, below=0.6cm of preprocessor] (trainer) {
+        Model Trainer \\
+        \normalfont\scriptsize Algorithm Encapsulation
+    };
+
+    % Draw a bounding box for the system core
+    \begin{scope}[on background layer]
+        \node[c4_system, fit=(pipeline) (preprocessor) (trainer), inner sep=15pt, label={[font=\sffamily\bfseries\color{SystemBlue}]above:System Boundary (ML Template)}] (system_boundary) {};
+    \end{scope}
+
+    % --- RIGHT ZONE: Adapters & Resources ---
+    \node[c4_system, fill=DbGreen!10, draw=DbGreen, right=1.5cm of pipeline] (adapters) {
+        Adapters (loader.py) \\
+        \normalfont\scriptsize External I/O Interfaces
+    };
+
+    \node[c4_database, below=1.5cm of adapters] (db) {
+        Data Lake / DB \\
+        \normalfont\scriptsize Raw \& Processed Data
+    };
+
+    % --- Connections ---
+    \draw[c4_rel] (datascientist) -- node[above, sloped, pos=0.55] {Triggers CLI} (system_boundary.west |- pipeline);
+    \draw[c4_rel, dashed] (datascientist) -- node[left] {Explores in} (notebooks);
+
+    \draw[c4_rel] (pipeline) -- node[right] {Uses} (preprocessor);
+    \draw[c4_rel] (pipeline) to[bend right=45] node[left] {Uses} (trainer);
+
+    \draw[c4_rel] (pipeline) -- node[above, pos=0.65] {Requests Data via} (adapters);
+    \draw[c4_rel] (adapters) -- node[right] {Queries} (db);
+
+\end{tikzpicture}
+
+\end{document}
