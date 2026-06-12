@@ -1,0 +1,116 @@
+\documentclass{modern-uml}
+
+\title{Software Design Architecture: UML Class Diagrams}
+\author{Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This document demonstrates the native TikZ-based implementation for modern UML Class Diagrams using the \texttt{modern-uml} class. It supports classes, interfaces, abstract classes, fields, methods, and all standard UML relationship connections.
+
+\section{E-Commerce Class Diagram}
+The following diagram illustrates a simplified order management system demonstrating composition, inheritance, realization, and association.
+
+\begin{center}
+\begin{tikzpicture}[node distance=2cm and 2.5cm, auto]
+
+    % --- Nodes ---
+    
+    % Abstract Class: User
+    \node[uml_abstract] (User) {
+        \textbf{\textit{User}}
+        \nodepart{two}
+        \# id: UUID \\
+        \# email: String \\
+        \# passwordHash: String
+        \nodepart{three}
+        + login(): boolean \\
+        + logout(): void \\
+        + resetPassword(): void
+    };
+
+    % Interface: Payable
+    \node[uml_interface, right=of User] (Payable) {
+        \textbf{\textless\textless Payable\textgreater\textgreater} \\
+        \textbf{PaymentMethod}
+        \nodepart{two}
+        \nodepart{three}
+        + processPayment(amount: double): boolean
+    };
+
+    % Class: Customer (Inherits User)
+    \node[uml_class, below=of User] (Customer) {
+        \textbf{Customer}
+        \nodepart{two}
+        - shippingAddress: Address \\
+        - loyaltyPoints: int
+        \nodepart{three}
+        + placeOrder(cart: Cart): Order \\
+        + addLoyaltyPoints(pts: int): void
+    };
+
+    % Class: CreditCard (Implements Payable)
+    \node[uml_class, below=of Payable] (CreditCard) {
+        \textbf{CreditCard}
+        \nodepart{two}
+        - cardNumber: String \\
+        - expiryDate: Date
+        \nodepart{three}
+        + processPayment(amount: double): boolean
+    };
+
+    % Class: Order
+    \node[uml_class, right=of Customer] (Order) {
+        \textbf{Order}
+        \nodepart{two}
+        - orderId: UUID \\
+        - status: OrderStatus \\
+        - totalAmount: double
+        \nodepart{three}
+        + addItem(item: OrderItem): void \\
+        + calculateTotal(): double
+    };
+
+    % Class: OrderItem
+    \node[uml_class, below=of Order] (OrderItem) {
+        \textbf{OrderItem}
+        \nodepart{two}
+        - productId: UUID \\
+        - quantity: int \\
+        - priceAtPurchase: double
+        \nodepart{three}
+        + getSubtotal(): double
+    };
+
+    % --- Relationships ---
+    
+    % Inheritance (Customer is a User)
+    \draw[uml_inherit] (Customer) -- (User);
+
+    % Realization (CreditCard implements Payable)
+    \draw[uml_realize] (CreditCard) -- (Payable);
+
+    % Association (Customer has Orders)
+    \draw[uml_assoc] (Customer) -- node[above] {1..*} (Order);
+
+    % Composition (Order contains OrderItems)
+    \draw[uml_compose] (Order) -- node[left] {1..*} (OrderItem);
+    
+    % Dependency (Order depends on PaymentMethod to process payment)
+    \draw[uml_depend] (Order) -- node[above] {uses} (CreditCard);
+
+\end{tikzpicture}
+\end{center}
+
+\section{UML Style Guide}
+\begin{itemize}
+    \item \textbf{Classes:} Blue headers (\texttt{SystemBlue}) with \texttt{uml\_class}.
+    \item \textbf{Interfaces:} Green headers (\texttt{DbGreen}) with \texttt{uml\_interface}.
+    \item \textbf{Abstract Classes:} Gray headers (\texttt{ExtSystemGray}) with \texttt{uml\_abstract}.
+    \item \textbf{Syntax:} Use \texttt{\textbackslash nodepart\{two\}} for fields and \texttt{\textbackslash nodepart\{three\}} for methods.
+\end{itemize}
+
+\end{document}

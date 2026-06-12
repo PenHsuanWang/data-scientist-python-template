@@ -1,0 +1,55 @@
+\documentclass{modern-seq}
+
+\title{Software Design Architecture: Time Sequence}
+\author{Engineering Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+This document demonstrates the modern technical styling and native TikZ-based implementation for time sequence diagrams.
+
+\section{Authentication Sequence Diagram}
+The following diagram illustrates a standard OAuth 2.0 flow between a Client, an API Gateway, and an Auth Server.
+
+\begin{center}
+\begin{tikzpicture}
+    % Set overall lifeline height
+    \def\seqheight{8}
+
+    % Define Actors (ID, Label, X Position)
+    \seqactor{client}{Client Application}{0}
+    \seqactor{gateway}{API Gateway}{5}
+    \seqactor{auth}{Auth Server}{10}
+
+    % Add Activation boxes over the lifelines
+    % \seqactivate{actor_id}{start_y}{end_y}
+    \seqactivate{client}{1}{7}
+    \seqactivate{gateway}{1.2}{4.5}
+    \seqactivate{auth}{2}{3.5}
+    
+    \seqactivate{gateway}{5.5}{6.5}
+
+    % Define Messages (From ID, To ID, Label, Y Level)
+    \seqmessage{client}{gateway}{1. Request Data (w/ Token)}{1.2}
+    \seqmessage{gateway}{auth}{2. Validate Token}{2}
+    \seqreturn{auth}{gateway}{3. Token Valid}{3.5}
+    \seqreturn{gateway}{client}{4. Return Data}{4.5}
+    
+    \seqmessage{client}{gateway}{5. Request Data (Expired Token)}{5.5}
+    \seqreturn{gateway}{client}{6. 401 Unauthorized}{6.5}
+
+\end{tikzpicture}
+\end{center}
+
+\section{Components}
+\begin{itemize}
+    \item \textbf{Actors:} Rendered as blue rounded rectangles, matching internal systems in C4.
+    \item \textbf{Lifelines:} Dashed vertical gray lines indicating time progression.
+    \item \textbf{Activations:} Shaded light blue boxes indicating active processing time.
+    \item \textbf{Messages:} Solid arrows for requests and dashed arrows for responses.
+\end{itemize}
+
+\end{document}

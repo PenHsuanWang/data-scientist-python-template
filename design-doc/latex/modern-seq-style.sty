@@ -1,0 +1,112 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{modern-seq-style}[2026/06/11 Modern Sequence Diagram Styling]
+
+% --- Core Packages ---
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning, fit, backgrounds, shapes.geometric, calc, arrows.meta}
+\RequirePackage{iftex}
+
+% --- Color Palette ---
+\definecolor{DocText}{HTML}{1F2937}      % Dark Gray/Slate
+\definecolor{DocPrimary}{HTML}{2563EB}   % Vibrant Blue
+\definecolor{SystemBlue}{HTML}{3B82F6}   % Primary System Blue
+\definecolor{ExtSystemGray}{HTML}{94A3B8} % External System Gray
+\definecolor{BgLight}{HTML}{F8F9FA}      % Off-white background
+\definecolor{SeqMsg}{HTML}{4B5563}       % Message Gray
+
+% --- Typography ---
+\ifLuaTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Inter}[
+        Path = /System/Library/Fonts/,
+        Extension = .ttc,
+        UprightFont = *,
+        BoldFont = *
+    ]
+\else\ifXeTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Helvetica}
+\else
+    \RequirePackage[T1]{fontenc}
+    \RequirePackage{helvet}
+    \renewcommand{\familydefault}{\sfdefault}
+\fi\fi
+
+% --- TikZ Styles ---
+\tikzset{
+    seq_actor/.style={
+        rectangle,
+        rounded corners=4pt,
+        align=center,
+        inner sep=8pt,
+        font=\sffamily\small\bfseries,
+        draw=SystemBlue,
+        fill=SystemBlue!10,
+        text=DocText,
+        thick,
+        minimum width=2.5cm
+    },
+    seq_lifeline/.style={
+        dashed,
+        thick,
+        draw=ExtSystemGray
+    },
+    seq_msg/.style={
+        ->,
+        >={Stealth[scale=1.2]},
+        thick,
+        draw=SeqMsg,
+        every node/.style={
+            above,
+            font=\sffamily\scriptsize,
+            text=DocText
+        }
+    },
+    seq_ret/.style={
+        ->,
+        >={Stealth[scale=1.2]},
+        dashed,
+        thick,
+        draw=SeqMsg,
+        every node/.style={
+            above,
+            font=\sffamily\scriptsize,
+            text=DocText
+        }
+    },
+    seq_activation/.style={
+        rectangle,
+        fill=SystemBlue!20,
+        draw=SystemBlue,
+        minimum width=12pt,
+        inner sep=0pt
+    }
+}
+
+% --- Sequence Diagram Macros ---
+\def\seqheight{10} % Default lifeline height
+
+% \seqactor{id}{Label}{x_position}
+\newcommand{\seqactor}[3]{
+    \node[seq_actor] (#1) at (#3, 0) {#2};
+    \draw[seq_lifeline] (#1) -- ++(0, -\seqheight);
+}
+
+% \seqmessage{from_id}{to_id}{Label}{y_level}
+\newcommand{\seqmessage}[4]{
+    \draw[seq_msg] (#1 |- 0, -#4) -- node[above] {#3} (#2 |- 0, -#4);
+}
+
+% \seqreturn{from_id}{to_id}{Label}{y_level}
+\newcommand{\seqreturn}[4]{
+    \draw[seq_ret] (#1 |- 0, -#4) -- node[above] {#3} (#2 |- 0, -#4);
+}
+
+% \seqactivate{id}{start_y}{end_y}
+% Draws an activation box on a lifeline
+\newcommand{\seqactivate}[3]{
+    \node[seq_activation, minimum height={(#3-#2)*1cm}] at (#1 |- 0, -{(#2+#3)/2}) {};
+}
+
+\endinput

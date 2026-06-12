@@ -1,0 +1,97 @@
+\documentclass[margin=15pt]{standalone}
+
+% Load the styling packages we created directly
+\usepackage{modern-uml-style}
+
+\begin{document}
+
+\begin{tikzpicture}[node distance=2cm and 2.5cm, auto]
+
+    % --- Nodes ---
+    
+    % Abstract Class: User
+    \node[uml_abstract] (User) {
+        \textbf{\textit{User}}
+        \nodepart{two}
+        \# id: UUID \\
+        \# email: String \\
+        \# passwordHash: String
+        \nodepart{three}
+        + login(): boolean \\
+        + logout(): void \\
+        + resetPassword(): void
+    };
+
+    % Interface: Payable
+    \node[uml_interface, right=of User] (Payable) {
+        \textbf{\textless\textless Payable\textgreater\textgreater} \\
+        \textbf{PaymentMethod}
+        \nodepart{two}
+        \nodepart{three}
+        + processPayment(amount: double): boolean
+    };
+
+    % Class: Customer (Inherits User)
+    \node[uml_class, below=of User] (Customer) {
+        \textbf{Customer}
+        \nodepart{two}
+        - shippingAddress: Address \\
+        - loyaltyPoints: int
+        \nodepart{three}
+        + placeOrder(cart: Cart): Order \\
+        + addLoyaltyPoints(pts: int): void
+    };
+
+    % Class: CreditCard (Implements Payable)
+    \node[uml_class, below=of Payable] (CreditCard) {
+        \textbf{CreditCard}
+        \nodepart{two}
+        - cardNumber: String \\
+        - expiryDate: Date
+        \nodepart{three}
+        + processPayment(amount: double): boolean
+    };
+
+    % Class: Order
+    \node[uml_class, right=of Customer] (Order) {
+        \textbf{Order}
+        \nodepart{two}
+        - orderId: UUID \\
+        - status: OrderStatus \\
+        - totalAmount: double
+        \nodepart{three}
+        + addItem(item: OrderItem): void \\
+        + calculateTotal(): double
+    };
+
+    % Class: OrderItem
+    \node[uml_class, below=of Order] (OrderItem) {
+        \textbf{OrderItem}
+        \nodepart{two}
+        - productId: UUID \\
+        - quantity: int \\
+        - priceAtPurchase: double
+        \nodepart{three}
+        + getSubtotal(): double
+    };
+
+    % --- Relationships ---
+    
+    % Inheritance (Customer is a User)
+    \draw[uml_inherit] (Customer) -- (User);
+
+    % Realization (CreditCard implements Payable)
+    \draw[uml_realize] (CreditCard) -- (Payable);
+
+    % Association (Customer has Orders)
+    \draw[uml_assoc] (Customer) -- node[above] {1..*} (Order);
+
+    % Composition (Order contains OrderItems)
+    \draw[uml_compose] (Order) -- node[left] {1..*} (OrderItem);
+    
+    % Dependency (Order depends on PaymentMethod to process payment)
+    \draw[uml_depend] (Order) -- node[above] {uses} (CreditCard);
+
+\end{tikzpicture}
+
+\end{document}

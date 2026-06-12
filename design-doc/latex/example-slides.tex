@@ -1,0 +1,69 @@
+% The key is aspectratio=169 to enforce widescreen PPT dimensions.
+\documentclass[aspectratio=169]{beamer}
+
+% Load our slide styling
+\usepackage{modern-slide-style}
+
+% We can seamlessly load our previously created C4 diagrams package!
+% Beamer already loads xcolor, so we don't need to worry about clashes.
+\usepackage{modern-c4-style}
+
+\title{\textbf{Architecture Review \& Proposals}}
+\subtitle{Q3 Technical Roadmap}
+\author{Engineering Team}
+\date{\today}
+
+\begin{document}
+
+% --- Slide 1: Title ---
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% --- Slide 2: Bullet Points ---
+\begin{frame}{Current System Challenges}
+    \begin{itemize}
+        \item \textbf{Scalability:} Monolithic services are becoming a bottleneck during high traffic.
+        \item \textbf{Data Isolation:} Stale reads happening due to tightly coupled data layers.
+        \item \textbf{Authentication:} Moving from stateful sessions to stateless JWT tokens (OAuth 2.0).
+    \end{itemize}
+    \vspace{1em}
+    \textit{Goal:} Decompose the core services to improve independent scaling capabilities and maintainability.
+\end{frame}
+
+% --- Slide 3: Embedded C4 Diagram ---
+\begin{frame}{Proposed Target Architecture (C4 Context)}
+    \centering
+    % Scaling the TikZ box to fit perfectly on the slide
+    \resizebox{0.8\textwidth}{!}{
+        \begin{tikzpicture}[node distance=3cm, auto]
+            % Nodes
+            \node[c4_person] (customer) {
+                Client Application \\
+                \normalfont\scriptsize Web / Mobile App
+            };
+
+            \node[c4_system, right=of customer] (gateway) {
+                API Gateway \\
+                \normalfont\scriptsize Handles routing \& rate-limiting.
+            };
+
+            \node[c4_container, right=of gateway] (microservice) {
+                Order Service \\
+                \normalfont\scriptsize Stateless Spring Boot App
+            };
+
+            \node[c4_database, below=1.5cm of microservice] (db) {
+                Order DB \\
+                \normalfont\scriptsize PostgreSQL
+            };
+
+            % Relationships
+            \draw[c4_rel] (customer) -- node {HTTPS/REST} (gateway);
+            \draw[c4_rel] (gateway) -- node {gRPC} (microservice);
+            \draw[c4_rel] (microservice) -- node {Reads/Writes} (db);
+        \end{tikzpicture}
+    }
+\end{frame}
+
+\end{document}
