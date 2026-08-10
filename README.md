@@ -1,150 +1,92 @@
-# 🚀 機器學習標準化專案模板 (ML OOP Standard Template)
+# 🚀 Enterprise ML Service Platform (企業級 ML 服務平台)
 
-歡迎來到本專案！這份指南專為準備從 **Jupyter Notebook (腳本式開發)** 轉移到 **Python 物件導向 (OOP) 架構** 的資料科學家所編寫。
+歡迎來到本專案！本專案是一個基於 **Specification-Driven Development (SDD)** 開發的企業級機器學習服務平台。
 
-## 🎯 為什麼要轉移？(Why Migrate?)
-
-在 Jupyter Notebook 中進行探索性資料分析 (EDA) 非常快速，但將 Notebook 直接投入生產環境通常會遇到以下痛點：
-- **隱藏狀態 (Hidden States):** 單元格執行順序錯誤導致變數被覆蓋或全域變數污染，結果難以重現。
-- **程式碼難以測試與重用 (Spaghetti Code):** 特徵轉換、模型訓練與資料存取混雜在一起。
-- **無法自動化:** 難以整合至 CI/CD Pipeline 進行自動化部署與監控。
-
-本專案模板提供了一套**極簡且標準化的 Python OOP 框架**，保留了您探索資料的彈性，同時建立了一道清晰的橋樑，協助您無痛將「實驗」升級為「工程化產品」。
+我們揚棄了過去將所有邏輯（資料處理、模型訓練、API 服務）綁死在單一流程的作法，轉而採用 **Hexagonal Architecture (六角架構)**、**Domain-Driven Design (DDD)** 與 **Event-Driven Architecture (事件驅動架構)**，將系統拆解為職責分明的多個平面與領域。
 
 ---
 
-## 📂 專案結構與概念藍圖 (Project Structure & Blueprint)
+## 🎯 核心架構理念 (Core Architecture Philosophy)
 
-根據目前專案目錄，以下是核心目錄結構摘要，以及依據架構規範設計的藍圖：
+本平台嚴格遵守 SDD 文件定義的架構規範，並劃分為四大平面：
 
-### 📁 當前核心目錄結構 (Tree)
+1. **Control Plane (控制平面)**: FastAPI 負責接收請求與認證，將 Command 派發給應用層。**禁止包含任何領域業務邏輯與基礎設施操作**。
+2. **Orchestration Plane (協作平面)**: 透過 Kafka 作為 Event Backbone 串接不同領域，並依賴外部工作流引擎 (如 Argo/Airflow) 進行任務排程。
+3. **Execution Plane (執行平面)**: 實體隔離的高運算任務環境 (Local Worker, Kubernetes, Spark)，確保訓練與資料處理不會拖垮控制平面。
+4. **Serving Plane (服務平面)**: 負責模型的部署與推論 (Inference)，透過 Canonical Prediction 契約對接下游系統 (SPACE/SPC)。
+
+---
+
+## 📂 領域邊界與目錄結構 (Bounded Contexts & Structure)
+
+本專案採用了嚴格的分層架構，以確保「依賴反轉 (Dependency Inversion)」：
+
 ```text
-data-scientist-python-template/
-├── data/                 # 資料來源
-├── notebooks/            # 實驗與探索筆記本
-├── src/                  # 專案原始碼
-│   ├── adapters/         # 外部轉接器 (如 loader.py)
-│   ├── exceptions/       # 錯誤處理
-│   ├── ml_core/          # 機器學習核心邏輯 (pipeline, preprocessor, trainer)
-│   └── utils/            # 共用工具
-├── tests/                # 測試案例
-├── design-doc/           # 架構與設計文件
-├── artifacts/            # 產出物
-├── .github/workflows/    # CI/CD 流程
-├── main.py               # 系統進入點
-├── pyproject.toml        # 專案配置 (相依性套件、Ruff 等)
-└── tox.ini               # 測試環境配置
+src/ml_platform/
+├── domain/               # 🧠 領域層 (The Core)
+│   ├── shared/           # 共用基礎 (EntityId, DomainEvent, AggregateRoot)
+│   ├── training/         # 訓練領域 (TrainingJob, TrainingRun, Events)
+│   ├── model/            # 模型生命週期領域
+│   └── serving/          # 模型服務與推論領域
+│
+├── application/          # ⚙️ 應用層 (Use Cases)
+│   └── training/         # 負責協調 Command, Domain, Ports 與 Event 發佈
+│
+├── ports/                # 🔌 介面合約 (Contracts)
+│   ├── repositories/     # 持久化介面 (無關 SQLAlchemy)
+│   ├── messaging/        # 訊息發佈介面 (無關 Kafka)
+│   └── execution/        # 執行器介面 (無關 K8s/Local)
+│
+├── adapters/             # 🛠️ 轉接器 (Infrastructure Implementations)
+│   ├── inbound/          # 驅動轉接器 (FastAPI Routers, CLI)
+│   └── outbound/         # 被驅動轉接器 (PostgreSQL, Kafka, MLflow, Memory)
+│
+└── infrastructure/       # 🏗️ 基礎設施層
+    ├── config/           # 環境變數與設定
+    └── bootstrap/        # Dependency Injection (DI) 與系統啟動
 ```
 
-### 📐 概念架構藍圖 (Left-Center-Right Layout)
+### 🛡️ 依賴規則 (The Dependency Rule)
+> **Adapter → Application → Domain**
 
-*   **Left Zone (User & Context):**
-    *   **Input:** Data Scientist / Engineer 透過 `notebooks/` 探索，或執行 CLI `main.py` 啟動流程。
-    *   **Output:** 訓練產出的模型與報表 (`artifacts/`)。
-*   **Center Zone (System Core):**
-    *   **Top Layer (Structure):** `src/`, `tests/`
-    *   **Middle Layer (Solution Core - 🔴 重點標示):** `src/ml_core/` (Pipeline 串接、Preprocessor 前處理、Trainer 模型訓練)。
-    *   **Bottom Layer (Infra & Tooling - 虛線標示):**
-        *   **CI/CD:** GitHub Actions (`ci.yml`), `tox`
-        *   **Dev Tools:** `pytest`, `ruff`, `pre-commit`
-*   **Right Zone (Adapters & External Resources):**
-    *   **Adapters:** `src/adapters/loader.py` (資料讀取介面)
-    *   **Data Sources:** 外部或本地資料集 (`data/`)
-*   **Top Zone (Ancillary Outputs):**
-    *   專案設計與架構說明 (`design-doc/`)
-*   **Bottom Zone (Metadata):**
-    *   核心原則：SOLID, Clean Architecture, 模組化機器學習管線。
+Domain 絕對不允許 import `fastapi`, `sqlalchemy`, `kafka`, 或 `mlflow`。所有的基礎設施互動都必須透過 `ports/` 定義的 Protocol 進行。
 
 ---
 
-## 🏗️ 核心架構：正交化維度 (Orthogonal Architecture)
+## 🗺️ 開發地圖與 MVP 階段 (Implementation Phases)
 
-為了徹底解決狀態污染，我們將系統拆解為三個互不干涉的維度。請將程式碼放入對應的維度中：
+為了確保架構穩健成長，我們依循 SDD 規劃了以下 MVP 開發階段，目前正在逐步落實中：
 
-### 1. 🎛️ 控制維度 (Control Vector): `main.py` 與 `src/ml_core/pipeline.py`
-- **職責:** 決定執行順序，如同樂高積木的組裝者。
-- **規則:** **這裡禁止出現任何數學運算、特徵轉換或寫死的參數。** 它是最高層的指揮中心。
-
-### 2. 🧠 領域維度 (Domain Vector): `loader.py`, `preprocessor.py`, `trainer.py`
-- **職責:** 執行具體的任務 (存取資料、轉換特徵、訓練模型)。
-- **規則:** 模組之間不互相呼叫，資料流動由 Control Vector 負責傳遞。
-
-### 3. 🛠️ 橫切維度 (Cross-Cutting): `Config`, `Exceptions`, `Utils`
-- **職責:** 貫穿全系統的基礎設施。
-- **規則:** `Config` 使用 `pydantic-settings` 作為唯一參數來源（支援環境變數），`Utils` 只放無狀態的純函式 (Pure Functions)。
-
----
-
-## 🗺️ 轉移指南：我的程式碼該放哪？(Where Does My Code Go?)
-
-我們建議採用兩階段開發：
-*   **Phase 1 (探索期):** 盡情在 `notebooks/` 資料夾內打草稿、畫圖、驗證特徵。
-*   **Phase 2 (工程化):** 確定方向後，請依循以下地圖將 Notebook 內的程式碼「歸位」：
-
-| 原本在 Notebook 裡寫的... | ➡️ 現在應該搬去... | 備註與注意事項 |
-| :--- | :--- | :--- |
-| `LEARNING_RATE = 0.05` 或檔案路徑 | **`src/ml_core/config.py`** | 這是全域唯一的參數設定中心，支援從 `.env` 或環境變數讀取。**不要在其他地方寫死數字！** |
-| `pd.read_csv(...)` 或 `engine.execute(sql)` | **`src/adapters/loader.py`** | 負責所有 I/O 互動（Adapter 層）。請在這裡封裝重試機制或底層錯誤捕捉。 |
-| `df.fillna()` 或 `StandardScaler()` 等資料清洗與特徵工程 | **`src/ml_core/preprocessor.py`** | ⚠️ **最關鍵的一步**：這是一個類別。訓練時請用 `fit_transform` 讓物件「記住」狀態（例如平均值）；推論時只能用 `transform` 套用狀態，**嚴格防止資料洩漏 (Data Leakage)**。 |
-| `model = XGBClassifier().fit(X, y)` | **`src/ml_core/trainer.py`** | 封裝特定的演算法。要換演算法？請在這裡替換，只要對外提供統一的 `fit` 和 `evaluate` 介面即可，其他檔案完全不用改！ |
-| `def calculate_distance():` (共用數學公式) | **`src/utils/`** | 放那些「純運算、不需要記住狀態」的函式。Notebook 和 `preprocessor` 都可以安全呼叫它。 |
+*   **[✅] Phase 1: Domain Foundation & Training Context**
+    建立目錄骨架、Shared Kernel (EntityId, DomainEvent)、TrainingJob 聚合根與狀態機、以及 Application Use Cases 與 Ports。完成純 in-memory 的領域測試。
+*   **[ ⏳ ] Phase 2: API & Persistence (進行中)**
+    實作 FastAPI Inbound Adapters、PostgreSQL Outbound Adapter，完成 HTTP API 到持久化的整合。
+*   **[   ] Phase 3: Event Backbone**
+    實作 Transactional Outbox Pattern 與 Kafka Event Publisher Adapter。
+*   **[   ] Phase 4: Execution Isolation**
+    實作 LocalJobExecutor，讓 Worker 從控制平面解耦。
+*   **[   ] Phase 5: Pipeline Orchestration**
+    整合 Argo/Airflow 作為外部排程器。
+*   **[   ] Phase 6: Model Registry**
+    實作 Model Context，與 MLflow Adapter 整合。
+*   **[   ] Phase 7: Serving & Inference**
+    建立 Canonical Prediction Contract。
+*   **[   ] Phase 8: CQRS & SSE**
+    實作前端狀態還原與 SSE (Server-Sent Events) 推送。
 
 ---
 
-## ✍️ 程式碼風格約定 (Ruff Only)
+## 🛠️ 工程標準與測試 (Engineering Standards)
 
-我們致力於維護可讀性極高、生產級的程式碼庫。提交前請確保符合以下規範：
+我們使用最現代化的 Python 開發工具鏈，確保極致的開發體驗與程式碼品質。
 
-1.  **現代化型別標註 (Type Hinting, Python 3.10+):**
-    *   **必須:** 所有函式的參數與回傳值都要標型別。
-    *   **正確:** `list[str]`, `dict[str, int]`, `int | None` (用 `|` 代表或)。
-    *   **禁止:** 🚫 `from typing import List, Dict, Union, Optional`。
-2.  **文檔字串 (Docstrings):** 所有公開的方法與類別都必須使用 **Sphinx (reST)** 格式撰寫註解，說明用途、`:param`、`:return` 與 `:raises`。
-3.  **防範過度工具化:** 我們全面採用 **Ruff** 作為唯一的 Linter, Formatter 與 Import Sorter，不再使用 Flake8 或 isort，以確保 CI/CD 的極速執行。
+1. **依賴管理**: 使用 `uv` 極速管理套件與虛擬環境。
+2. **靜態檢查**: 使用 `ruff` 進行 Linter 與 Formatting，取代 flake8 與 black。
+3. **型別檢查**: `mypy --strict` 強制型別安全，所有函式都必須有 Type Hinting (Python 3.10+)。
+4. **測試策略 (六層防護)**:
+    - **Domain Tests**: 完全 in-memory，不依賴任何外部系統，測試業務邏輯與狀態機。
+    - **Application Tests**: 使用 Fake Ports 測試 Use Case 協調流程。
+    - **Contract / Adapter Tests**: 測試 FastAPI 與 Postgres/Kafka 等基礎設施的介面。
+    - **Integration / E2E Tests**: 全系統整合驗證。
 
----
-
-## 🛠️ 技術工具棧與自動化防護網 (Toolchain & Automation)
-
-從 Notebook 轉移到專案開發，最大的差異在於我們有自動化工具來保障程式碼品質。當你嘗試 `git commit` 時，可能會發現被系統擋下來。別擔心，這是我們的自動化防護網正在運作！
-
-本專案使用 `uv` 進行依賴管理，並內建了以下核心工具：
-
-### 1. Pytest (單元測試框架)
-業界標準的測試框架，確保你的邏輯在修改後不會壞掉。
-*   **AAA 結構:** 每個測試案例都應嚴格遵守 `Arrange` (準備假資料) ➡️ `Act` (執行目標函式) ➡️ `Assert` (斷言結果) 的三段式結構。
-*   **Mock (模擬):** 為了確保測試是**隔離且快速**的，當需要連線資料庫或外部 API 時，我們會使用 `pytest-mock` 攔截連線並回傳假資料。
-
-### 2. Mypy (靜態型別檢查)
-Python 是動態語言，容易發生「傳錯參數型別」導致程式在執行期崩潰。
-*   **作用:** Mypy 會在你不執行程式碼的情況下，掃描所有 `Type Hints` (型別標註)。
-*   **設定檔位置:** `pyproject.toml` (位於 `[tool.mypy]` 區塊)
-*   **設定檔解析:**
-    *   `python_version = "3.10"`: 指定使用的 Python 版本標準。
-    *   `strict = true`: 開啟最嚴格的檢查模式，這是避免線上 Bug 的最強武器。
-    *   `warn_return_any = true`: 如果函式回傳了未知型別 (`Any`) 會跳出警告。
-    *   `warn_unused_configs = true`: 警告設定檔中未被使用的設定。
-    *   `disallow_untyped_defs = true`: **強迫所有函式都必須加上型別標註**，不能偷懶！
-    *   `disallow_incomplete_defs = true`: 不允許只標註部分參數，要標就得全標。
-    *   `ignore_missing_imports = true`: 忽略第三方套件 (如 pandas, sklearn) 缺乏型別提示的錯誤，避免雜訊。
-    *   `exclude = [...]`: 排除不需要檢查的目錄，例如虛擬環境 (`venv`, `.tox`) 等。
-
-### 3. Ruff (全能程式碼檢查與格式化工具)
-負責統一團隊的程式碼風格，並抓出潛在的語法問題。Ruff 取代了舊時代的 Flake8、isort 與 Black。
-*   **設定檔位置:** `pyproject.toml` (位於 `[tool.ruff]` 區塊)
-*   **優勢:** 使用 Rust 編寫，速度比傳統工具快 10-100 倍，能大幅縮短 CI/CD 等候時間。
-*   **自動修復:** 執行 `ruff check --fix` 可以自動修正大部分的語法不規範。
-
-### 4. Pre-commit (Git 提交防護網)
-這是你在開發時最常碰到的守門員。
-*   **設定檔位置:** `.pre-commit-config.yaml`
-*   **作用:** 它是一個 Git Hook。每次你執行 `git commit` 時，Pre-commit 會自動觸發 Ruff 進行檢查與修復。
-*   **目的:** 如果你的程式碼不符合規範，Commit 會直接**被拒絕**，直到你修正為止。
-
-### 5. Tox (測試環境總指揮)
-Tox 是用來統籌整個測試與檢查流程的工具。
-*   **設定檔位置:** `tox.ini`
-*   **作用:** 當你在終端機輸入 `tox` 時，它會自動讀取此設定檔，建立乾淨的虛擬環境，並依序過關蔣：執行 Pytest 測試 ➡️ 執行 Ruff 檢查風格 ➡️ 執行 Mypy 檢查型別。
-*   **目的:** 這是為了模擬 CI/CD 的行為。在推上遠端之前，只要在本地跑過一次 `tox` 且全數通過，就能確保你的程式碼達到生產環境的標準。
-
-祝開發順利！將實驗轉化為穩健的系統，從這裡開始。
+*欲了解更詳細的架構決策與設計原則，請參閱 [design-doc/ml-system-refactor-architecture/sdd-development-specification.md](design-doc/ml-system-refactor-architecture/sdd-development-specification.md) 文件。*

@@ -1,0 +1,211 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1200" width="100%" height="100%" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #F8FAFC;">
+
+    <defs>
+        <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+            <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#CBD5E1" flood-opacity="0.5"/>
+        </filter>
+
+        <!-- Solid Arrow (Sync Call) -->
+        <marker id="arrow-sync" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#1E293B" />
+        </marker>
+
+        <!-- Dashed Arrow (Async/Return) -->
+        <marker id="arrow-return" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748B" />
+        </marker>
+
+        <!-- Event Arrow (Kafka) -->
+        <marker id="arrow-event" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#F59E0B" />
+        </marker>
+
+        <!-- NEW: Updated Arrow for CQRS -->
+        <marker id="arrow-updated" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#D53F8C" />
+        </marker>
+    </defs>
+
+    <!-- Title -->
+    <text x="800" y="35" font-size="24" font-weight="bold" fill="#0F172A" text-anchor="middle">ML Service Platform – Time Sequence Chart (端到端時序圖)</text>
+    <text x="800" y="60" font-size="14" fill="#475569" text-anchor="middle">Event-Driven Training &amp; Model Lifecycle | SA Review Updated (Client State Recovery Added)</text>
+
+    <!-- ==================== PHASE BOXES (BACKGROUND) ==================== -->
+
+    <rect x="20" y="140" width="1550" height="280" rx="6" fill="#F0F9FF" opacity="0.6" stroke="#BAE6FD" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <text x="40" y="165" font-size="14" font-weight="bold" fill="#0284C7">A. 建立 Training Job (Sync API &amp; Atomic DB Transaction)</text>
+
+    <rect x="20" y="430" width="1550" height="260" rx="6" fill="#FFFBEB" opacity="0.6" stroke="#FEF3C7" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <text x="40" y="455" font-size="14" font-weight="bold" fill="#D97706">B. 排程與執行 (Async Orchestration &amp; Local Execution)</text>
+
+    <!-- SA NEW: CQRS State Push -->
+    <rect x="20" y="700" width="1550" height="110" rx="6" fill="#FDF4FF" opacity="0.8" stroke="#D53F8C" stroke-width="2" stroke-dasharray="4,2"/>
+    <text x="40" y="725" font-size="14" font-weight="bold" fill="#97266D">C. 前端狀態還原與推送 (CQRS Projection &amp; SSE Real-time Push) [UPDATED]</text>
+
+    <rect x="20" y="820" width="1550" height="230" rx="6" fill="#F0FDF4" opacity="0.6" stroke="#BBF7D0" stroke-width="1.5" stroke-dasharray="4,4"/>
+    <text x="40" y="845" font-size="14" font-weight="bold" fill="#16A34A">D. 訓練完成與模型註冊 (Cross-Context Choreography)</text>
+
+    <!-- ==================== LIFELINES (VERTICAL DASHED) ==================== -->
+    <line x1="100" y1="120" x2="100" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="250" y1="120" x2="250" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="400" y1="120" x2="400" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="550" y1="120" x2="550" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="700" y1="120" x2="700" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="850" y1="120" x2="850" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="1000" y1="120" x2="1000" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="1150" y1="120" x2="1150" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="1300" y1="120" x2="1300" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+    <line x1="1450" y1="120" x2="1450" y2="1080" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5,5"/>
+
+    <!-- ==================== HEADERS (NODES) ==================== -->
+    <!-- Client -->
+    <rect x="50" y="80" width="100" height="40" rx="4" fill="#FFFFFF" stroke="#64748B" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="100" y="105" font-size="12" font-weight="bold" fill="#334155" text-anchor="middle">Web Client</text>
+
+    <!-- FastAPI & SSE -->
+    <rect x="180" y="70" width="140" height="50" rx="4" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="250" y="90" font-size="12" font-weight="bold" fill="#0369A1" text-anchor="middle">FastAPI / SSE</text>
+    <text x="250" y="108" font-size="10" fill="#0284C7" text-anchor="middle">(API Gateway)</text>
+
+    <!-- AppTrain -->
+    <rect x="340" y="70" width="120" height="50" rx="4" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="400" y="90" font-size="12" font-weight="bold" fill="#B45309" text-anchor="middle">AppService</text>
+    <text x="400" y="108" font-size="10" fill="#D97706" text-anchor="middle">(Training Context)</text>
+
+    <!-- Domain -->
+    <rect x="490" y="70" width="120" height="50" rx="4" fill="#FEE2E2" stroke="#DC2626" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="550" y="90" font-size="12" font-weight="bold" fill="#B91C1C" text-anchor="middle">TrainingDomain</text>
+    <text x="550" y="108" font-size="10" fill="#DC2626" text-anchor="middle">(Aggregate Root)</text>
+
+    <!-- Repository & Outbox -->
+    <rect x="640" y="70" width="120" height="50" rx="4" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="700" y="90" font-size="12" font-weight="bold" fill="#475569" text-anchor="middle">Repository</text>
+    <text x="700" y="108" font-size="10" fill="#64748B" text-anchor="middle">(DB + Outbox)</text>
+
+    <!-- Kafka -->
+    <rect x="800" y="75" width="100" height="40" rx="4" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="850" y="100" font-size="12" font-weight="bold" fill="#D97706" text-anchor="middle">Kafka Broker</text>
+
+    <!-- Orchestrator -->
+    <rect x="940" y="70" width="120" height="50" rx="4" fill="#F3E8FF" stroke="#9333EA" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="1000" y="90" font-size="12" font-weight="bold" fill="#7E22CE" text-anchor="middle">Orchestrator</text>
+    <text x="1000" y="108" font-size="10" fill="#9333EA" text-anchor="middle">(Argo / Airflow)</text>
+
+    <!-- Worker -->
+    <rect x="1090" y="70" width="120" height="50" rx="4" fill="#FCE7F3" stroke="#DB2777" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="1150" y="90" font-size="12" font-weight="bold" fill="#BE185D" text-anchor="middle">Local Worker</text>
+    <text x="1150" y="108" font-size="10" fill="#DB2777" text-anchor="middle">(JobExecutor)</text>
+
+    <!-- AppModel -->
+    <rect x="1240" y="70" width="120" height="50" rx="4" fill="#FEF3C7" stroke="#D97706" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="1300" y="90" font-size="12" font-weight="bold" fill="#B45309" text-anchor="middle">AppService</text>
+    <text x="1300" y="108" font-size="10" fill="#D97706" text-anchor="middle">(Model Context)</text>
+
+    <!-- MLflow -->
+    <rect x="1390" y="70" width="120" height="50" rx="4" fill="#F1F5F9" stroke="#64748B" stroke-width="1.5" filter="url(#shadow)"/>
+    <text x="1450" y="90" font-size="12" font-weight="bold" fill="#475569" text-anchor="middle">Model Registry</text>
+    <text x="1450" y="108" font-size="10" fill="#64748B" text-anchor="middle">(MLflow)</text>
+
+
+    <!-- ==================== SEQUENCE MESSAGES ==================== -->
+
+    <!-- Phase A: Create Job -->
+    <!-- Client to API -->
+    <path d="M 100 200 L 245 200" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="175" y="193" font-size="11" fill="#1E293B" text-anchor="middle">POST /api/v1/training-jobs</text>
+
+    <!-- API to AppTrain -->
+    <path d="M 250 230 L 395 230" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="325" y="223" font-size="11" fill="#1E293B" text-anchor="middle">1.1 create_training_job()</text>
+
+    <!-- AppTrain to Domain -->
+    <path d="M 400 260 L 545 260" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="475" y="253" font-size="11" fill="#1E293B" text-anchor="middle">1.1.1 create(cmd)</text>
+
+    <path d="M 550 280 L 405 280" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+    <text x="475" y="273" font-size="11" fill="#64748B" text-anchor="middle">return job (status=CREATED)</text>
+
+    <!-- DB Transaction Note -->
+    <rect x="360" y="295" width="380" height="60" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1" rx="4"/>
+    <text x="550" y="315" font-size="11" font-weight="bold" fill="#B45309" text-anchor="middle">1.2 同一個 DB Transaction (AC-04 核心防線)</text>
+    <text x="550" y="335" font-size="10" fill="#B45309" text-anchor="middle">save(job) + save(outbox_event)</text>
+
+    <!-- AppTrain to Repo -->
+    <path d="M 400 325 L 695 325" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+
+    <path d="M 700 345 L 405 345" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+    <text x="440" y="365" font-size="11" fill="#64748B" text-anchor="middle">return success</text>
+
+    <!-- AppTrain to API -->
+    <path d="M 400 375 L 255 375" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+
+    <!-- API to Client -->
+    <path d="M 250 400 L 105 400" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+    <text x="175" y="393" font-size="11" fill="#0284C7" font-weight="bold" text-anchor="middle">1.3 HTTP 201 (job_id)</text>
+
+
+    <!-- Phase B: Orchestration & Execution -->
+    <!-- Repo to Kafka -->
+    <path d="M 700 480 L 845 480" stroke="#F59E0B" stroke-width="1.5" fill="none" marker-end="url(#arrow-event)"/>
+    <text x="775" y="473" font-size="11" fill="#D97706" font-weight="bold" text-anchor="middle">2.1 Relay Event</text>
+    <text x="775" y="493" font-size="10" fill="#F59E0B" text-anchor="middle">(ml.training.job.created.v1)</text>
+
+    <!-- Kafka to Orchestrator -->
+    <path d="M 850 520 L 995 520" stroke="#F59E0B" stroke-width="1.5" fill="none" marker-end="url(#arrow-event)"/>
+    <text x="925" y="513" font-size="11" fill="#D97706" font-weight="bold" text-anchor="middle">2.2 consume(event)</text>
+
+    <!-- Orchestrator to Worker -->
+    <path d="M 1000 550 L 1145 550" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="1075" y="543" font-size="11" fill="#1E293B" text-anchor="middle">2.3 submit(task)</text>
+
+    <!-- Worker Box (Execution) -->
+    <rect x="1150" y="570" width="140" height="50" fill="#FDF2F8" stroke="#DB2777" stroke-width="1" rx="4"/>
+    <text x="1220" y="590" font-size="10" font-weight="bold" fill="#BE185D" text-anchor="middle">2.4 Worker Execution</text>
+    <text x="1220" y="605" font-size="10" fill="#DB2777" text-anchor="middle">(Local Memory Scan)</text>
+
+    <!-- Worker to Orchestrator (Complete) -->
+    <path d="M 1150 640 L 1005 640" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+    <text x="1075" y="633" font-size="11" fill="#64748B" text-anchor="middle">2.5 report_completed()</text>
+
+    <!-- Orchestrator to Kafka -->
+    <path d="M 1000 670 L 855 670" stroke="#F59E0B" stroke-width="1.5" fill="none" marker-end="url(#arrow-event)"/>
+    <text x="925" y="663" font-size="11" fill="#D97706" font-weight="bold" text-anchor="middle">2.6 publish(event)</text>
+    <text x="925" y="683" font-size="10" fill="#F59E0B" text-anchor="middle">(ml.training.run.completed)</text>
+
+
+    <!-- SA NEW: Phase C (CQRS & SSE) -->
+    <!-- Kafka to FastAPI -->
+    <path d="M 850 750 L 255 750" stroke="#D53F8C" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-updated)"/>
+    <text x="550" y="743" font-size="11" fill="#D53F8C" font-weight="bold" text-anchor="middle">3.1 Consume Event for Read Model Projection</text>
+
+    <!-- FastAPI to Client (SSE) -->
+    <path d="M 250 780 L 105 780" stroke="#D53F8C" stroke-width="2" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-updated)"/>
+    <text x="175" y="773" font-size="11" fill="#D53F8C" font-weight="bold" text-anchor="middle">3.2 SSE Push: COMPLETED</text>
+
+
+    <!-- Phase D: Model Cross Context -->
+    <!-- Kafka to Model App -->
+    <path d="M 850 870 L 1295 870" stroke="#F59E0B" stroke-width="1.5" fill="none" marker-end="url(#arrow-event)"/>
+    <text x="1075" y="863" font-size="11" fill="#D97706" font-weight="bold" text-anchor="middle">4.1 consume(ml.training.run.completed)</text>
+
+    <!-- AppModel to MLflow -->
+    <path d="M 1300 900 L 1445 900" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="1375" y="893" font-size="11" fill="#1E293B" text-anchor="middle">4.2 create_model_version()</text>
+
+    <!-- MLflow Immutable Lock Note -->
+    <rect x="1330" y="915" width="220" height="30" fill="#F1F5F9" stroke="#64748B" stroke-width="1" rx="4"/>
+    <text x="1440" y="935" font-size="10" font-weight="bold" fill="#334155" text-anchor="middle">Artifact Lock: Immutable (AC-04)</text>
+
+    <!-- MLflow to AppModel -->
+    <path d="M 1450 970 L 1305 970" stroke="#64748B" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrow-return)"/>
+    <text x="1375" y="963" font-size="11" fill="#64748B" text-anchor="middle">return ModelVersion (v17)</text>
+
+    <!-- AppModel to Repo -->
+    <path d="M 1300 1000 L 705 1000" stroke="#1E293B" stroke-width="1.5" fill="none" marker-end="url(#arrow-sync)"/>
+    <text x="1000" y="993" font-size="11" fill="#1E293B" text-anchor="middle">4.3 save_outbox_event(ml.model.registered.v1)</text>
+
+    <!-- Repo to Kafka -->
+    <path d="M 700 1030 L 845 1030" stroke="#F59E0B" stroke-width="1.5" fill="none" marker-end="url(#arrow-event)"/>
+    <text x="775" y="1023" font-size="11" fill="#D97706" font-weight="bold" text-anchor="middle">4.4 Relay Event</text>
+
+</svg>

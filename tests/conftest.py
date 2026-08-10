@@ -1,28 +1,68 @@
+"""
+Domain 與 Application 測試共用 Fixtures。
+
+提供 Fake Port 實作，確保 Domain/Application 測試
+完全 in-memory，不依賴任何外部基礎設施 (SDD §65-66)。
+"""
+
+from __future__ import annotations
+
 import pytest
-from pathlib import Path
 
-# 在這裡定義全域或共用的 Fixture，供所有的測試檔案使用
+from src.ml_platform.domain.shared.domain_event import DomainEvent
+from src.ml_platform.domain.shared.entity_id import EntityId
+from src.ml_platform.domain.training.training_job import TrainingJob
 
 
-@pytest.fixture
-def mock_data_path(tmp_path: Path) -> Path:
+class FakeTrainingJobRepository:
     """
-    提供一個暫時的測試資料路徑，並實際建立測試資料。
+    In-Memory TrainingJob Repository (Fake)。
+
+    用於 Application 層 Use Case 測試。
     """
-    data_file = tmp_path / "mock_dataset.csv"
-    data_file.write_text("feature1,feature2,target\n1,2,0\n3,4,1\n5,6,1")
-    return data_file
+
+    def __init__(self) -> None:
+        self._store: dict[str, TrainingJob] = {}
+
+    async def get(self, job_id: EntityId) -> TrainingJob | None:
+        """取得 TrainingJob。"""
+        return self._store.get(str(job_id))
+
+    async def save(self, job: TrainingJob) -> None:
+        """儲存 TrainingJob。"""
+        self._store[str(job.id)] = job
+
+    async def list_all(self) -> list[TrainingJob]:
+        """列出所有 TrainingJob。"""
+        return list(self._store.values())
 
 
-@pytest.fixture
-def mock_missing_data_path(tmp_path: Path) -> Path:
-    """Intentionally non-existent path for error-path tests."""
-    return tmp_path / "does_not_exist.csv"
-
-
-@pytest.fixture
-def mock_model_path(tmp_path: Path) -> Path:
+class FakeEventPublisher:
     """
-    提供一個暫時的模型儲存路徑。
+    In-Memory Event Publisher (Fake)。
+
+    記錄所有已發佈的事件，供測試斷言使用。
     """
-    return tmp_path / "mock_model.pkl"
+
+    def __init__(self) -> None:
+        self.published_events: list[DomainEvent] = []
+
+    async def publish(self, event: DomainEvent) -> None:
+        """發佈單一事件。"""
+        self.published_events.append(event)
+
+    async def publish_all(self, events: list[DomainEvent]) -> None:
+        """批次發佈事件。"""
+        self.published_events.extend(events)
+
+
+@pytest.fixture()
+def fake_repository() -> FakeTrainingJobRepository:
+    """提供 Fake TrainingJob Repository。"""
+    return FakeTrainingJobRepository()
+
+
+@pytest.fixture()
+def fake_event_publisher() -> FakeEventPublisher:
+    """提供 Fake Event Publisher。"""
+    return FakeEventPublisher()

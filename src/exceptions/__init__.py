@@ -36,3 +36,21 @@ class ModelTrainingError(MLProjectBaseError):
     """模型訓練階段錯誤 (如演算法不收斂、OOM)。"""
 
     pass
+
+
+class ExperimentTrackingError(MLProjectBaseError):
+    """MLflow 實驗追蹤或模型註冊失敗。"""
+
+    pass
+
+
+class ModelServingError(MLProjectBaseError):
+    """模型載入或推論階段錯誤。"""
+
+    pass
+
+
+class ModelNotFoundError(ModelServingError):
+    """指定的模型名稱或版本在 Registry 中找不到。"""
+
+    pass

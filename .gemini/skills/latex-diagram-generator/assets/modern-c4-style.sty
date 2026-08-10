@@ -1,0 +1,112 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{modern-c4-style}[2026/06/11 Modern Technical Styling and C4 TikZ Styles]
+
+% --- Core Packages ---
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning, fit, backgrounds, shapes.geometric, calc}
+\RequirePackage{iftex} % Detect engine for font loading
+
+% --- Modern Tailwind-inspired Color Palette ---
+\definecolor{DocText}{HTML}{1F2937}      % Dark Gray/Slate
+\definecolor{DocPrimary}{HTML}{2563EB}   % Vibrant Blue
+\definecolor{SystemBlue}{HTML}{3B82F6}   % Primary System Blue
+\definecolor{ExtSystemGray}{HTML}{94A3B8} % External System Gray
+\definecolor{DbGreen}{HTML}{10B981}      % Database Emerald
+\definecolor{BgLight}{HTML}{F8F9FA}      % Off-white background
+
+% --- Typography ---
+\ifLuaTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Inter}[
+        Path = /System/Library/Fonts/, % Standard path for macOS
+        Extension = .ttc,
+        UprightFont = *,
+        BoldFont = * % Fallback to standard system sans if specific font missing
+    ]
+\else\ifXeTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Helvetica} % Safe fallback for XeLaTeX
+\else
+    \RequirePackage[T1]{fontenc}
+    \RequirePackage{helvet} % Standard LaTeX fallback
+    \renewcommand{\familydefault}{\sfdefault}
+\fi\fi
+
+% --- C4 Model TikZ Style Definitions ---
+\tikzset{
+    % Base style for all C4 nodes
+    c4_base/.style={
+        rectangle,
+        rounded corners=4pt,
+        align=center,
+        inner sep=10pt,
+        font=\sffamily\small,
+        draw,
+        thick
+    },
+    % Person / Actor
+    c4_person/.style={
+        c4_base,
+        fill=DocPrimary!15,
+        draw=DocPrimary,
+        minimum width=3cm,
+        minimum height=1.5cm,
+        font=\sffamily\small\bfseries,
+        text=DocText
+    },
+    % Internal Software System
+    c4_system/.style={
+        c4_base,
+        fill=SystemBlue!10,
+        draw=SystemBlue,
+        minimum width=4cm,
+        minimum height=2cm,
+        font=\sffamily\small\bfseries,
+        text=DocText
+    },
+    % External System
+    c4_external/.style={
+        c4_base,
+        fill=ExtSystemGray!10,
+        draw=ExtSystemGray,
+        minimum width=4cm,
+        minimum height=2cm,
+        text=ExtSystemGray!80!black
+    },
+    % Container (Web App, API, Mobile App)
+    c4_container/.style={
+        c4_system,
+        fill=white,
+        dashed
+    },
+    % Database (Cylinder)
+    c4_database/.style={
+        cylinder,
+        shape border rotate=90,
+        draw=DbGreen,
+        fill=DbGreen!10,
+        thick,
+        aspect=0.25,
+        minimum width=3cm,
+        minimum height=2.5cm,
+        align=center,
+        font=\sffamily\small\bfseries,
+        text=DocText
+    },
+    % Relationships / Arrows
+    c4_rel/.style={
+        ->,
+        >=stealth,
+        thick,
+        draw=DocText!60,
+        every node/.style={
+            fill=white,
+            inner sep=3pt,
+            font=\sffamily\tiny,
+            text=DocText!80
+        }
+    }
+}
+
+\endinput

@@ -41,9 +41,23 @@ class Trainer:
         except Exception as e:
             raise ModelTrainingError("模型訓練過程失敗") from e
 
+    def get_model(self) -> Any:
+        """
+        取得已訓練的模型物件，供 ExperimentTracker 記錄。
+
+        :return: 底層模型物件。
+        :raises ModelTrainingError: 若模型尚未訓練。
+        """
+        if self.model is None:
+            raise ModelTrainingError("無法取得未訓練的模型物件")
+        return self.model
+
     def save(self, save_path: Path) -> None:
         """
-        將訓練好的模型狀態序列化並儲存至磁碟。
+        將訓練好的模型狀態序列化並儲存至磁碟 (本地備份用途)。
+
+        整合 MLflow 後，模型主要透過 Artifact Store 儲存，
+        此方法作為可選的本地備份機制。
 
         :param save_path: 模型儲存的目標路徑。
         :raises ModelTrainingError: 若儲存失敗。

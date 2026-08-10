@@ -1,0 +1,58 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{modern-slide-style}[2026/06/11 Modern Beamer Slide Styling]
+
+% --- Beamer Colors & Templates ---
+% Reusing our Tailwind-inspired palette for the slides
+\definecolor{DocText}{HTML}{1F2937}      % Dark Gray/Slate
+\definecolor{DocPrimary}{HTML}{2563EB}   % Vibrant Blue
+\definecolor{SystemBlue}{HTML}{3B82F6}   % Primary System Blue
+\definecolor{BgLight}{HTML}{F8F9FA}      % Off-white background
+
+\setbeamercolor{normal text}{fg=DocText,bg=BgLight}
+\setbeamercolor{structure}{fg=SystemBlue}
+\setbeamercolor{frametitle}{fg=white,bg=SystemBlue}
+\setbeamercolor{title}{fg=SystemBlue, bg=white}
+\setbeamercolor{item}{fg=DocPrimary}
+
+% Clean up the UI
+\setbeamertemplate{navigation symbols}{} % Remove default PDF navigation symbols
+\setbeamertemplate{itemize items}[circle]
+
+% Custom modern frame title bar
+\setbeamertemplate{frametitle}{%
+    \nointerlineskip%
+    \begin{beamercolorbox}[wd=\paperwidth,ht=3.5ex,dp=1.5ex,leftskip=2ex,rightskip=2ex]{frametitle}
+        \usebeamerfont{frametitle}\textbf{\insertframetitle}
+    \end{beamercolorbox}%
+}
+
+% Simple footline with just the slide number
+\setbeamertemplate{footline}{
+  \leavevmode%
+  \hbox{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.25ex,dp=1ex,right,rightskip=2ex]{normal text}%
+    \insertframenumber{} / \inserttotalframenumber
+  \end{beamercolorbox}}%
+  \vskip0pt%
+}
+
+% --- Typography ---
+% Beamer uses sans-serif by default, so we apply our modern font to it
+\RequirePackage{iftex}
+\ifLuaTeX
+    \RequirePackage{fontspec}
+    \setsansfont{Inter}[
+        Path = /System/Library/Fonts/,
+        Extension = .ttc,
+        UprightFont = *,
+        BoldFont = *
+    ]
+\else\ifXeTeX
+    \RequirePackage{fontspec}
+    \setsansfont{Helvetica}
+\else
+    \RequirePackage[T1]{fontenc}
+    \RequirePackage{helvet}
+\fi\fi
+
+\endinput

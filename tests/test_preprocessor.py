@@ -1,13 +1,7 @@
 import pytest
 import pandas as pd
 from src.ml_core.preprocessor import Preprocessor
-from src.ml_core.config import ProjectConfig
 from src.exceptions import PreprocessingError
-
-
-@pytest.fixture
-def dummy_config(mock_data_path, mock_model_path):
-    return ProjectConfig(data_path=mock_data_path, model_save_path=mock_model_path)
 
 
 def test_preprocessor_fit_transform(dummy_config):

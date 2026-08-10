@@ -1,0 +1,105 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{modern-uml-style}[2026/06/11 Modern UML Diagram Styling]
+
+% --- Core Packages ---
+\RequirePackage{xcolor}
+\RequirePackage{tikz}
+\usetikzlibrary{positioning, fit, backgrounds, shapes.multipart, arrows.meta, calc}
+\RequirePackage{iftex}
+
+% --- Color Palette ---
+\definecolor{DocText}{HTML}{1F2937}      % Dark Gray/Slate
+\definecolor{DocPrimary}{HTML}{2563EB}   % Vibrant Blue
+\definecolor{SystemBlue}{HTML}{3B82F6}   % Primary System Blue
+\definecolor{ExtSystemGray}{HTML}{94A3B8} % External System Gray
+\definecolor{DbGreen}{HTML}{10B981}      % Database Emerald
+\definecolor{BgLight}{HTML}{F8F9FA}      % Off-white background
+
+% --- Typography ---
+\ifLuaTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Inter}[
+        Path = /System/Library/Fonts/,
+        Extension = .ttc,
+        UprightFont = *,
+        BoldFont = *
+    ]
+\else\ifXeTeX
+    \RequirePackage{fontspec}
+    \setmainfont{Helvetica}
+\else
+    \RequirePackage[T1]{fontenc}
+    \RequirePackage{helvet}
+    \renewcommand{\familydefault}{\sfdefault}
+\fi\fi
+
+% --- TikZ Styles for UML ---
+\tikzset{
+    % Base class node with 3 parts: Header, Fields, Methods
+    uml_class/.style={
+        rectangle split,
+        rectangle split parts=3,
+        rectangle split part fill={SystemBlue!15, white, white},
+        draw=SystemBlue,
+        thick,
+        rounded corners=2pt,
+        text=DocText,
+        font=\sffamily\small,
+        align=left,
+        text width=4.5cm,
+        inner sep=1ex
+    },
+    % Interface node
+    uml_interface/.style={
+        uml_class,
+        rectangle split part fill={DbGreen!15, white, white},
+        draw=DbGreen
+    },
+    % Abstract class node
+    uml_abstract/.style={
+        uml_class,
+        rectangle split part fill={ExtSystemGray!20, white, white},
+        draw=ExtSystemGray
+    },
+    % --- UML Relationship Arrows ---
+    % Inheritance: Subclass -> Superclass
+    uml_inherit/.style={
+        -{Triangle[open, length=3mm, width=3mm]},
+        thick,
+        draw=DocText!80
+    },
+    % Realization (Interface implementation): Class -> Interface
+    uml_realize/.style={
+        -{Triangle[open, length=3mm, width=3mm]},
+        dashed,
+        thick,
+        draw=DocText!80
+    },
+    % Composition: Container <>-> Component (Diamond at the container start)
+    uml_compose/.style={
+        {Diamond[fill=DocText!80, length=3mm, width=3mm]}-,
+        thick,
+        draw=DocText!80
+    },
+    % Aggregation: Container <>-> Component (Open diamond at the container start)
+    uml_aggregate/.style={
+        {Diamond[open, length=3mm, width=3mm]}-,
+        thick,
+        draw=DocText!80
+    },
+    % Directed Association: A -> B
+    uml_assoc/.style={
+        -{Stealth[length=2.5mm]},
+        thick,
+        draw=DocText!80
+    },
+    % Dependency: A ..> B
+    uml_depend/.style={
+        -{Stealth[length=2.5mm]},
+        dashed,
+        thick,
+        draw=DocText!80
+    }
+}
+
+\endinput
